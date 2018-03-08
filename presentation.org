@@ -1,0 +1,2309 @@
+#    -*- mode: org -*-
+#+OPTIONS: reveal_center:t reveal_progress:t reveal_history:t reveal_control:t
+#+OPTIONS: reveal_mathjax:t reveal_rolling_links:nil reveal_keyboard:t reveal_overview:t num:nil
+#+OPTIONS: reveal_width:1600 reveal_height:900
+#+OPTIONS: toc:nil <:nil timestamp:nil email:t reveal_slide_number:"c/t"
+#+REVEAL_MARGIN: 0.1
+#+REVEAL_MIN_SCALE: 0.5
+#+REVEAL_MAX_SCALE: 2.5
+#+REVEAL_TRANS: none
+#+REVEAL_THEME: blood
+#+REVEAL_HLEVEL: 1
+#+REVEAL_EXTRA_CSS: ./presentation.css
+#+REVEAL_ROOT: ../reveal.js/
+
+#+TITLE: Easy to Use, Hard to Misuse
+#+AUTHOR: Ben Deane
+#+EMAIL: bdeane@blizzard.com
+#+DATE: Thursday May 10th, 2018
+
+#+REVEAL_HTML: <script type="text/javascript" src="./presentation.js"></script>
+
+* Title slide settings                                             :noexport:
+#+BEGIN_SRC emacs-lisp
+(setq org-reveal-title-slide
+(concat "<div class='vertspace6'/>"
+"<h2>%t</h2><h3>Declarative Style in C++</h3></div>"
+"<h3>%a / <a href=\"mailto:bdeane@blizzard.com\">bdeane@blizzard.com</a> / "
+"<a href=\"http://twitter.com/ben_deane\">@ben_deane</a></h3>"
+"<h4>C++Now / %d</h4>"))
+(set-face-foreground 'font-lock-comment-face "dark green")
+#+END_SRC
+
+* Declarative Style
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_QUOTE
+"I keep hearing this term and every time I hear it the definition seems very hand-wavy."
+#+REVEAL_HTML: <div></div><div class='author'>
+-- A C++Now submission reviewer
+#+REVEAL_HTML: </div>
+#+END_QUOTE
+
+#+BEGIN_NOTES
+This quote from the reviewers who accepted my talk.
+
+This talk is going to be part philosophy, part history, and hopefully a good
+part pragmatism. I'm not going to give you a lot of "pure functional"
+rabbit-holing.
+
+I'm going to try to find a definition and guidelines that will fit with C++ as a
+large, multiparadigm language.
+#+END_NOTES
+
+* In This Talk
+#+REVEAL_HTML: <div class='vertspace2'></div>
+1. Definitions
+1. Where we came from
+1. Where we are
+1. Where we could be headed
+
+* What Do We Mean?
+** Wikipedia
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_QUOTE
+"A programming paradigm ... that expresses the logic of a computation without
+describing its control flow."
+#+END_QUOTE
+
+#+BEGIN_NOTES
+Hmm. Maybe? But control flow is sort of important to C++, I'm not sure we can
+ditch it entirely.
+#+END_NOTES
+
+** wiki.c2.com
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_QUOTE
+"Often it involves the separation of 'facts' from operations on the facts."
+#+END_QUOTE
+#+BEGIN_QUOTE
+"... generalizes the pure functional model."
+#+END_QUOTE
+
+#+ATTR_REVEAL: :frag (appear)
+ - commutativity
+ - idempotency
+
+#+BEGIN_NOTES
+Ward Cunningham's original wiki. Home to the "Informal History of Programming
+Ideas".
+
+We are not too concerned with pure functional in C++.
+
+Order of statements should not affect semantics. Replication of statements
+should not affect semantics.
+
+This seems to be talking more about say, Prolog, than C++.
+#+END_NOTES
+
+** Language Classifications?
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+ATTR_REVEAL: :frag (appear)
+ - imperative/procedural (FORTRAN, C)
+ - object-oriented (Smalltalk, Java)
+ - functional (ML, Haskell)
+ - etc.
+
+#+BEGIN_NOTES
+Many general-purpose languages (certainly of the last 30-40 years) resist strict
+classification.
+
+It's a bit like trying to classify music: there is a lot of overlap and a lot of
+subgenres. People say "classical music" commonly meaning anything from Bach to
+John Williams.
+
+The Beatles were ostensibly a pop band. "She Loves You" is unmistakeably a pop
+song. On the other hand, they produced songs like "Within You Without You" and
+"Helter Skelter".
+
+On this list, even Haskell can be programmed "imperatively".
+
+We would say that C++ is multiparadigm of course. Procedural, OO, functional,
+generic at least.
+#+END_NOTES
+
+** Declarative Style Indicators
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+ATTR_REVEAL: :frag (appear)
+ - referential transparency
+ - say WHAT in preference to HOW
+ - minimize imperative style
+ - expressions over statements
+ - declaring things?
+
+#+BEGIN_NOTES
+Declarative style is not a hard-and-fast thing, especially not in C++.
+
+It's rather a way of tailoring the code.
+
+At the risk of being etymologically reductive, in part it's a preference for
+using declarations. Declarations are an indicator of this style. Why shouldn't
+we follow this thread?
+#+END_NOTES
+
+** Declarative Style Motivation
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_QUOTE
+"Declarative programming is everyone's dream, because it looks like it's easier
+to prove correct."
+#+REVEAL_HTML: <div></div><div class='author'>
+-- Another C++Now submission reviewer
+#+REVEAL_HTML: </div>
+#+END_QUOTE
+
+#+BEGIN_NOTES
+This quote also from the reviewers who accepted my talk.
+
+I'm not sure there's going to be any proving in this talk, but for me this
+speaks to the fact that declarative style tends to focus on expressions and
+minimize the use of statements.
+
+I would say that it is easier to convince ourselves that it is correct.
+#+END_NOTES
+
+* Expressions vs Statements
+
+** Expressions
+#+REVEAL_HTML: <div class='vertspace2'></div>
+"An expression is a sequence of operators and operands that specifies a
+computation. An expression can result in a value and can cause side effects." [expr.pre] \S 1
+#+REVEAL_HTML: <div class='vertspace2'></div>
+Properties of expressions:
+#+ATTR_REVEAL: :frag (appear)
+ - value category
+ - type
+
+#+BEGIN_NOTES
+The standard has a lot to say about expressions in general before even going
+into detail about kinds of expressions and how to make them.
+
+There is the familiar value-category tree (lvalue, xvalue, prvalue, etc), which
+has "expression" at its root.
+
+Expressions have intrinsic properties that can be reasoned about.
+
+There is also "context dependence" which is to do with unevaluated contexts and
+evaluation for side effects only. A bit of standardese, really.
+#+END_NOTES
+
+** Expressions Compose On Multiple Axes
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_SRC c++
+auto expr = e1 @ e2 @ e3;
+#+END_SRC
+#+REVEAL_HTML: <div class='vertspace2'></div>
+Consider this snippet.
+
+#+BEGIN_NOTES
+Here, @ is any operator.
+
+There are at least two obvious kinds of composition going on here.
+
+a, b, and c have values. expr has a value.
+
+a, b, and c have types. expr has a type.
+
+Expressions compose on the value axis, and also on the type axis.
+Value-composition happens at runtime, and type composition happens at
+compile-time. So it can be checked.
+#+END_NOTES
+
+** Statements
+#+REVEAL_HTML: <div class='vertspace2'></div>
+"Except as indicated, statements are executed in sequence." [stmt.stmt] \S 1
+#+REVEAL_HTML: <div class='vertspace2'></div>
+Properties of statements:
+#+ATTR_REVEAL: :frag (appear)
+ - er...
+
+#+BEGIN_NOTES
+The standard doesn't have a lot to say about statements in general. They are
+defined extrinsically.
+#+END_NOTES
+
+** Statements "Compose" Only By Sequencing
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_SRC c++
+s1;
+s2;
+s3;
+#+END_SRC
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+ATTR_REVEAL: :frag (appear)
+Many of our guidelines, best practices, idioms, and much of our tooling, static
+and dynamic analysis, is in service of checking the implicit constraints around
+statement "composition".
+
+#+BEGIN_NOTES
+Statements "compose" only by sequencing.
+
+There is no direct way to constrain this.
+No type checking.
+Some value checking is done with asserts.
+We have (varyingly implicit) constraints with pre- and post-conditions.
+We have the implicit constraints imposed by variable lifetime extents.
+We have constraints imposed by variable scopes -> this is checkable, so we do it a lot!
+
+Dijkstra: "Our intellectual powers are rather geared to master static relations
+and our powers to visualize processes evolving in time are relatively poorly
+developed."
+#+END_NOTES
+
+** Imperative Safety Gear
+#+REVEAL_HTML: <div class='vertspace2'></div>
+Many of our guidelines, best practices, idioms, and much of our tooling, static
+and dynamic analysis, is in service of checking the implicit constraints around
+statement "composition".
+
+#+BEGIN_NOTES
+We make conventions. We make guidelines.
+
+We make tools. We like to run multiple static analysers to get different
+benefits from each.
+
+We make more tools. We make libraries in support of those tools. We add things
+to the language to help us manage this problem. We have a contracts proposal!
+
+This is all well and good, but here's an alternative: use fewer statements and
+more expressions.
+#+END_NOTES
+
+* Let's Deconstruct a Bit...
+
+** World's Last Bug
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_SRC c
+while (true)
+{
+  status = GetRadarInfo();
+  if (status = 1)
+    LaunchMissiles();
+}
+#+END_SRC
+Ancient history you say?
+
+#+BEGIN_NOTES
+This is an assignment acting as an expression.
+
+Two odd things here. Let's digress a bit and consider how history brought us to
+the current situation.
+#+END_NOTES
+
+** Odd Thing #1: Assignments are Expressions
+#+REVEAL_HTML: <div class='vertspace2'></div>
+Assignment is a statement.
+
+Expressions are statements?
+
+Assignment as an expression is a historical choice.
+
+#+BEGIN_NOTES
+When I was at university, I learned Modula-3. Modula-3 had a particular compile
+error that became well known to me and my friends.
+#+END_NOTES
+
+** Odd Thing #1: Assignments are Expressions
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_QUOTE
+"Expression is not a statement."
+#+REVEAL_HTML: <div></div><div class='author'>
+-- Modula-3 compiler, 1993
+#+REVEAL_HTML: </div>
+#+END_QUOTE
+
+#+BEGIN_NOTES
+Some of us were used to programming C, where expressions are statements.
+
+But this didn't start with C: so-called expression-oriented languages were
+already around for a while, notably ALGOL-68 (1968) and LISP (1958).
+
+Hence...
+#+END_NOTES
+
+** LISP is Expression-Oriented
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_QUOTE
+"LISP programmers know the value of everything, but the cost of nothing."
+#+REVEAL_HTML: <div></div><div class='author'>
+-- Alan Perlis (after Oscar Wilde)
+#+REVEAL_HTML: </div>
+#+END_QUOTE
+
+** Odd Thing #1: Assignments are Expressions
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_SRC c
+/* The following function will print a non-negative number, n, to
+   the base b, where 2<=b<=10.  This routine uses the fact that
+   in the ASCII character set, the digits 0 to 9 have sequential
+   code values.  */
+printn(n, b) {
+    extrn putchar;
+    auto a;
+
+    if (a = n / b)    /* assignment, not test for equality */
+        printn(a, b); /* recursive */
+    putchar(n % b + '0');
+}
+#+END_SRC
+
+#+BEGIN_NOTES
+I had to tell my syntax highlighter that this was C. Does anyone know what
+language this is?
+
+From the Users' Reference to B by Ken Thompson. (B: 1969)
+
+B was descended from Martin Richards' BCPL (1967), which had an assignment
+command, not an assignment expression.
+#+END_NOTES
+
+** Odd Thing #1: Assignments are Expressions
+#+REVEAL_HTML: <div class='vertspace2'></div>
+We've learned to deal with this. But we don't really like it.
+#+ATTR_REVEAL: :frag (appear)
+ - yoda conditions
+ - compiler warnings
+ - P0963: discouraged
+
+#+BEGIN_NOTES
+P0963: structured binding declaration as a condition
+#+END_NOTES
+
+** Odd Thing #2: = Means Assignment
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_SRC c
+/* The following function will print a non-negative number, n, to
+   the base b, where 2<=b<=10.  This routine uses the fact that
+   in the ASCII character set, the digits 0 to 9 have sequential
+   code values.  */
+printn(n, b) {
+    extrn putchar;
+    auto a;
+
+    if (a = n / b)    /* assignment, not test for equality */
+        printn(a, b); /* recursive */
+    putchar(n % b + '0');
+}
+#+END_SRC
+
+** Odd Thing #2: = Means Assignment
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_QUOTE
+"A notorious example for a bad idea was the choice of the equal sign to denote
+assignment."
+#+REVEAL_HTML: <div></div><div class='author'>
+-- Niklaus Wirth
+#+REVEAL_HTML: </div>
+#+END_QUOTE
+
+#+BEGIN_NOTES
+"Because it overthrows a century old tradition to let “=” denote a comparison
+for equality, a predicate which is either true or false."
+
+"the operands are on unequal footing ... x = y does not mean the same thing as y = x."
+
+From this I conclude that Niklaus Wirth is not really a fan of operator
+overloading. We'll come back to this idea later.
+
+#+END_NOTES
+
+** Odd Thing #2: = Means Assignment
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+ATTR_REVEAL: :frag (appear)
+ - Superplan (1951) introduced ~=~ for assignment
+ - FORTRAN (1957) used ~=~ (because ~.GT.~ ~.LT.~ ~.EQ.~ etc)
+ - ALGOL-58 introduced ~:=~ (assignment) distinct from ~=~ (equality)
+  - Subsequently many languages went this way
+ - BCPL (1967) used ~:=~
+ - B (1969) simplified a lot of BCPL syntax, went with ~=~
+  - Followed by C (1972) and many other languages
+
+#+BEGIN_NOTES
+The 50s and 60s was an incredible time for programming language innovation.
+Superplan introduced the for loop!
+
+FORTRAN had to use a very restricted character set. There were no greater than
+or less than symbols, hence the idiosyncratic relational operators and the
+freeing up of equals for assignment.
+
+B introduced the arithmetic assignment operators: += etc.
+#+END_NOTES
+
+** Odd Thing #2: = Means Assignment
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_QUOTE
+"Since assignment is about twice as frequent as equality testing
+in typical programs, it’s appropriate that the operator be half as long."
+#+REVEAL_HTML: <div></div><div class='author'>
+-- Ken Thompson
+#+REVEAL_HTML: </div>
+#+END_QUOTE
+
+#+BEGIN_NOTES
+Ken Thompson wanted to fit BCPL on the PDP-7. BCPL's compiler at the time was
+16k. PDP-7 had 4k of memory. So Ken cut down the number of characters in source
+wherever he could.
+#+END_NOTES
+
+** Declaration vs (Re-)Assignment
+#+REVEAL_HTML: <div class='vertspace2'></div>
+In moving from BCPL to B, the distinction between
+
+declaration and reassignment was blurred.
+#+BEGIN_SRC c++
+int a = 42; // declaration/initialization
+
+a = 1729; // reassignment
+#+END_SRC
+
+#+BEGIN_QUOTE
+"It cannot be overemphasized that *assignment and initialization are different
+operations*."
+#+REVEAL_HTML: <div></div><div class='author'>
+-- Bjarne Stroustrup, /The C++ Programming Language/
+#+REVEAL_HTML: </div>
+#+END_QUOTE
+
+#+BEGIN_NOTES
+Early languages (50s and 60s) often distinguished declaration-assignment from
+reassignment. Pascal-type languages still do.
+
+Consider ~int~ here replaced with ~let~, and you have a mathematical declaration
+or variable introduction. A mathematical assignment is nonsensical.
+
+This distinction was clear in BCPL, which uses = for declaration and := for
+reassignment. But the cutting-down-for-memory of B introduced ambiguity.
+#+END_NOTES
+
+** <End of Historical Diversion>
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+ATTR_REVEAL: :frag (appear)
+ * Declaring things is -- has always been -- fine.
+ * Declaration and assignment are different things that look the same.
+ * Expression-statements are best avoided.
+   - Chained assignments are a syntactic laziness.
+
+#+BEGIN_NOTES
+What does a look at history tell us about programming style, especially
+declarative style?
+
+Assignment as an expression is a lazy convenience that doesn't do us any
+favours. Expression statements have always been a trap for the unwary.
+
+That's why we have warnings for things like this. And that's why we have things
+like if-initializers and nodiscard attributes.
+#+END_NOTES
+
+** Expressions vs Statements: Recap
+#+REVEAL_HTML: <div class='vertspace2'></div>
+Expressions have values.
+
+Expressions have types and value categories.
+#+REVEAL_HTML: <div class='vertspace2'></div>
+Statements mutate state.
+
+Statements have implicit constraints between them.
+#+REVEAL_HTML: <div class='vertspace2'></div>
+Expressions are easier to reason about than statements.
+
+#+BEGIN_NOTES
+To me this is the heart of declarative style: a preference for using expressions
+over statements.
+
+Expressions are easier to reason about: compilers have been reasoning about them
+for 50 years and we are still having problems convincing compilers to reason
+effectively about statements.
+#+END_NOTES
+
+* A Quick Declarative Study
+
+** Example
+#+REVEAL_HTML: <div class='vertspace2'></div>
+Given:
+#+BEGIN_SRC c++
+weak_ptr<Foo> wp;
+#+END_SRC
+How to write:
+#+BEGIN_SRC c++
+Bar b;
+{
+  auto sp = wp.lock();
+  if (sp) b = sp->bar();
+}
+#+END_SRC
+In a (more) declarative way.
+
+#+BEGIN_NOTES
+Here is an imperative piece of code. What's wrong with it?
+
+ - declaration/initialization split (b could well be const after init)
+ - mutable state
+ - scope control (note convention)
+
+This code would likely pass code review. It's the best we can do with imperative
+style. It's ticking several guideline boxes. But it's still unsatisfying.
+
+I'm using shared_ptr here as a standin for some generic access that requires
+this kind of pattern: the pattern is not just for shared_ptr.
+#+END_NOTES
+
+** C++17 if-initializer?
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_SRC c++
+Bar b;
+if (auto sp = wp.lock(); sp)
+  b = sp->bar();
+#+END_SRC
+This still has the declaration/initialization split. Still has mutable state.
+
+#+BEGIN_NOTES
+Note: this is sort of a workaround for the assignment being an expression.
+
+I think it likely that this will become a style that replaces the simple
+assignment-as-an-expression.
+#+END_NOTES
+
+** Ternary operator?
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_SRC c++
+Bar b = wp.lock() ? wp.lock()->bar() : Bar{};
+#+END_SRC
+Hm...
+
+#+BEGIN_NOTES
+Temporary lives until semicolon? But double lock.
+#+END_NOTES
+
+** C++?? ternary-operator-initializer?
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_SRC c++
+// this isn't real syntax...
+Bar b = [auto sp = wp.lock(); sp] ? sp->bar() : Bar{};
+#+END_SRC
+Might be nice... but not today.
+
+#+BEGIN_NOTES
+Expressions and statements aren't equivalent, even when they "are".
+
+Unlike ~if~, syntax doesn't allow us to put a declaration in the condition.
+#+END_NOTES
+
+** GCC Extension?
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_SRC c
+Bar b =
+({
+  auto sp = wp.lock();
+  sp ? sp->bar() : Bar{};
+});
+#+END_SRC
+Not ISO C++.
+
+#+BEGIN_NOTES
+GCC has an extension called an expression statement. Hm...
+
+This is similar to how a compound statement might be handled in a functional
+language, where the value of the statement is the value of the last statement in
+the body.
+#+END_NOTES
+
+** I+LE?
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_SRC c++
+Bar b = [&] () {
+  if (auto sp = wp.lock(); sp) return sp->bar();
+  return Bar{};
+}();
+#+END_SRC
+Immediately-invoked, inline, initializing, ...
+
+#+BEGIN_NOTES
+This might be OK? Avoids declaration/initialization split anyway. Depends on
+your codebase style.
+#+END_NOTES
+
+** Optional-like?
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_SRC c++
+Bar b = get_bar_or(wp.lock(), Bar{});
+#+END_SRC
+Not really generic enough.
+
+** Functorial/Monadic Interface?
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_SRC c++
+shared_ptr<Bar> b = fmap(wp.lock(),
+                         [] (auto foo) { return foo.bar(); });
+#+END_SRC
+#+BEGIN_SRC c++
+template <typename T, typename F>
+[[nodiscard]] auto fmap(const shared_ptr<T>& p, F f)
+    -> shared_ptr<invoke_result_t<F, T>>
+{
+  ...
+}
+#+END_SRC
+
+#+BEGIN_NOTES
+This might be OK? Again depends on your codebase style.
+
+Note the nodiscard attribute: another piece of imperative safety gear that helps
+us avoid the pitfalls of statements.
+#+END_NOTES
+
+** Study Conclusions
+#+REVEAL_HTML: <div class='vertspace2'></div>
+"Total" declarative style is not always achievable in C++.
+
+A /more/ declarative style is a reasonable goal.
+
+Some features of C++ help us get there.
+
+Different domains lean towards different approaches.
+
+#+BEGIN_NOTES
+IILEs help, nodiscard attribute helps
+
+Different domains: we probably wouldn't want to use a monadic approach for
+shared_ptr. But we might well want to for futures. For errors, the answer would
+probably depend on our codebase's existing practice.
+
+A key idea is to minimize statements and maximize the use of expressions. This
+maximizes the compiler's help.
+#+END_NOTES
+
+** Easy/Hard
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+REVEAL_HTML: <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+#+REVEAL_HTML: <tr>
+#+REVEAL_HTML: <th class="org-left">Easy to Use</td>
+#+REVEAL_HTML: <th class="org-left">Hard to Misuse</td>
+#+REVEAL_HTML: </tr>
+#+REVEAL_HTML: <tr>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="1">composition</div></td>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="2">typed expressions</div></td>
+#+REVEAL_HTML: </tr>
+#+REVEAL_HTML: <tr>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="3">few conditions</div></td>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="4">operators & functions</div></td>
+#+REVEAL_HTML: </tr>
+#+REVEAL_HTML: <tr>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="5">total functions</div></td>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="6">declarations</div></td>
+#+REVEAL_HTML: </tr>
+#+REVEAL_HTML: </tbody>
+#+REVEAL_HTML: </table>
+
+#+BEGIN_NOTES
+Composition and declarative style go hand in hand.
+
+Conditions get eliminated, or get pushed up or down the call stack. Pushing down
+the call stack encapsulates conditions when there is some intrinsic property of
+the data structure that is a condition (like optionality). Pushing up the call
+stack and replacing with a behaviour that is passed in gives control to the
+caller while keeping the call site declarative.
+
+Few conditions tends to imply total functions.
+
+Declarations: const, AAA.
+#+END_NOTES
+
+* Existing Declarative Practice
+
+** Core Guidelines
+#+REVEAL_HTML: <div class='vertspace2'></div>
+/~Con.1~/ By default, make objects immutable.
+
+/~Con.4~/ Use const to define objects with values that do not change after
+construction.
+
+/~ES.21~/ Don't introduce a variable (or constant) before you need to use it.
+
+/~ES.22~/ Don't declare a variable until you have a value to initialize it with.
+
+/~ES.28~/ Use lambdas for complex initialization.
+
+#+BEGIN_NOTES
+Corollary to /Con.4/: we probably have lots of objects that can be const.
+
+Just watch a few episodes of C++Weekly...
+#+END_NOTES
+
+** Functions in General
+#+REVEAL_HTML: <div class='vertspace2'></div>
+Which is better?
+#+BEGIN_SRC c++
+// do A
+...
+// do B
+...
+// do C
+...
+#+END_SRC
+or
+#+BEGIN_SRC c++
+do_A();
+do_B();
+do_C();
+#+END_SRC
+?
+
+#+BEGIN_NOTES
+Function calls are expressions. Functions turn statements into expressions. To
+me there is one specific structural reason why function calls are better.
+#+END_NOTES
+
+** The "Normal" Reasons
+#+REVEAL_HTML: <div class='vertspace2'></div>
+ - shorter is more expressive, understandable
+ - encapsulation of variable scopes, lifetimes
+ - give things names
+
+** My Reason: ~return~
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+ATTR_REVEAL: :frag (appear)
+ - ~return~ is the ~goto~ that we love
+ - it cuts through all the complexity
+ - I know that nothing happens afterwards
+ - way better than ~break~ (super-~break~!)
+ - and if that wasn't enough, RVO
+
+#+BEGIN_NOTES
+I am not a fan of "one exit path per function". I don't think this is a
+particularly controversial point of view. In C++ it's an antipattern. When you
+have RAII, you don't need this!
+
+Early-outs make for shallow, simple conditions. "Guard Clauses" is the name for
+this refactoring, in fact.
+
+~return~ can very simply cut out of find-style algorithms.
+
+The notion of single-exit was introduced with Structured Programming as a guard
+against alternate returns, which were not returns /from/ multiple places but
+returns /to/ multiple places. e.g. in FORTRAN when a function had an error it
+would do an alternate return to a place where the error was handled.
+#+END_NOTES
+
+** <algorithm>
+#+REVEAL_HTML: <div class='vertspace2'></div>
+No Raw Loops
+
+#+BEGIN_NOTES
+Algorithms are essentially declarative: they are functions. They are expressive.
+They have names. They declare what's going on.
+
+"No raw loops" as a goal is a subset of "strive for declarative code".
+#+END_NOTES
+
+** ~#include "my_algorithms.h"~
+#+REVEAL_HTML: <div class='vertspace2'></div>
+ - ~is_prefix_of~
+ - ~join~
+ - ~transform_if~
+ - ~set_differences~ (aka before and after)
+ - ~push_back_unique~
+
+#+BEGIN_NOTES
+Here is a selection of algorithms in my toolkit.
+
+None of these algorithms is groundbreaking. Some of them are little more than
+rebrandings of one-liners. None of them is more than a handful of lines.
+
+We'll come back to the idea of structuring interfaces to support declarative
+style. But for now consider ~is_prefix_of~. What order should the arguments be
+in?
+#+END_NOTES
+
+** Argument ordering
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_SRC c++
+string_view prefix;
+string_view s;
+
+// member function: reads nicely
+bool b = s.starts_with(prefix);
+
+// when making a free function, make it read as though it were infix
+// bool b = prefix is_prefix_of s;
+bool b = is_prefix_of(prefix, s);
+#+END_SRC
+
+#+BEGIN_NOTES
+~string_view::starts_with~ is a fine function. But it is a member function, and
+often we prefer free functions. So when we make a free function, a good rule of
+thumb is to order the arguments as if it were infix.
+#+END_NOTES
+
+** Declarative Style and Statements
+#+REVEAL_HTML: <div class='vertspace2'></div>
+ - expression statement
+ - compound statement
+ - selection statement (~if~, ~switch~)
+ - iteration statement (~for~, ~while~, ~do~)
+ - jump statement (~break~, ~continue~, ~return~, ~goto~)
+ - declaration statement
+
+#+BEGIN_NOTES
+Declarative style is essentially a preference for avoiding statements.
+
+Expression statement is for side-effects only: mutable state. Oddly this
+includes assignment expressions.
+ - -wunused-value ("statement has no effect")
+ - nodiscard attribute in C++17
+ - yoda conditions
+
+No raw loops: prefer function calls (expressions) over iteration statements. And
+if you don't have loops, you don't have ~break~ or ~continue~.
+
+Use I+LEs and functions in general: leverage declarations, avoid selection
+statement in calling code.
+
+Only the last of these (declaration statement) is not a bad smell.
+#+END_NOTES
+
+* Declarative Domains and Patterns
+
+** Logging : Imperative turned Declarative
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_SRC c
+fprintf(g_debugLogFilep, "R Tape loading error, %d:%d", line, stmt);
+#+END_SRC
+vs
+#+BEGIN_SRC c++
+LOG("R Tape loading error, " << line << ':' << stmt);
+#+END_SRC
+
+#+BEGIN_NOTES
+Logging is very often declarative. Nothing much new here, but let's explore a
+bit because it's a domain that benefits greatly from declarative practice.
+
+We're using overloaded operators. We're using RAII. We've got a declarative,
+concatenative style. What has been gained here?
+
+Composability: through operator overloading, we have the ability to extend the
+expression, because expressions are composable.
+
+Extensibility: we can provide the operator for our own types.
+
+Type checking: with fprintf, the format string and the arguments have to match
+or bad things will happen. The worst we can expect here is that we get
+unexpected conversions of the arguments and therefore unexpected output, but
+that shouldn't actually cause a crash. And usually we'll get a compile error.
+#+END_NOTES
+
+** Safety at the Cost of Performance?
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_SRC c++
+LOG("R Tape loading error, " << line << ':' << stmt);
+#+END_SRC
+Logging is a great candidate for expression templates.
+
+Marc Eaddy: /Pimp My Log()/ (CppCon 2014 Lightning Talks)
+
+https://www.youtube.com/watch?v=TS_waQZcZVc
+
+#+BEGIN_NOTES
+We gained safety and ease of use. We lost performance?
+
+We can get the performance back by using expression templates. Logging is a
+great candidate for expression templates.
+ - paradoxically, because it's a single /statement/
+ - a single statement issued for a single side-effect
+ - so avoids problems with ~auto~ that can arise with expression templates
+#+END_NOTES
+
+** Where Did the Global Go?
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_SRC c++
+// somewhere, a "global" variable lurks? where does the log go to?
+
+// declarative log context
+DECLARE_LOG_SOURCE(Spectrum);
+
+LOG("R Tape loading error, " << line << ':' << stmt);
+#+END_SRC
+
+If the problem you're solving fundamentally cuts across the code, sometimes a
+singleton works just fine. (With the usual caveats.)
+
+#+BEGIN_NOTES
+Logging framework? What has replaced the global variable? Functions and/or
+declarations in the global namespace.
+
+The logging library I use has the idea of a log source: a way to name where logs
+are generated, picked up from the most enclosing namespace (class, actual
+namespace or translation unit). This is a "global variable" but one that is
+constant.
+
+The benefits of declarative style outweigh the drawbacks of having a few global
+variables for domains like this.
+#+END_NOTES
+
+** Log Sinks: OO turned Declarative
+#+REVEAL_HTML: <div class='vertspace2'></div>
+A study in compositional design.
+#+BEGIN_SRC c++
+class Sink
+{
+  ...
+  virtual bool Push(const Entry& e);
+  ...
+};
+#+END_SRC
+
+#+BEGIN_NOTES
+The counterpart to a log source is a log sink. This takes the place of the
+global file pointer. On destruction, the logger object dispatches the log entry
+to the sink. (Explain about Entry).
+
+So let's talk about log sinks, which is an example of applying declarative style
+to a traditionally object-oriented approach. The key is composition.
+
+A Sink has one important method: to push an entry. Notice it returns bool
+indicating whether or not the entry was actually accepted.
+
+With just this basic interface, we have quite a range of choices in sinks we can
+make.
+#+END_NOTES
+
+** Sink Variations
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_SRC c++
+class FileSink : Sink
+{
+  ...
+  FileSink(string_view pathname);
+  ...
+};
+
+class DebugSink : Sink { ... };
+#+END_SRC
+
+#+BEGIN_NOTES
+At a basic level, we can make different sinks that go to different places. One
+to a log file, one to the debug window, maybe one to a listening log aggregator
+service over the network.
+#+END_NOTES
+
+** Sink Variations
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_SRC c++
+class FilterSink : Sink
+{
+  ...
+  template <typename Pred>
+  FilterSink(Pred p);
+  ...
+  using Predicate = std::function<bool(const Entry&)>;
+  Predicate pred;
+};
+#+END_SRC
+
+#+BEGIN_NOTES
+We can also make sinks that inspect the log entry and only accept certain
+entries. So we can make a sink that filters entries passed to it.
+#+END_NOTES
+
+** Sink Variations
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_SRC c++
+// TODO: ExecutionPolicy Concept :)
+template <typename ExecutionPolicy>
+class ExecSink : Sink { ... };
+#+END_SRC
+
+#+BEGIN_NOTES
+We can make a sink that wraps another sink and implements an execution policy,
+so we can implement threaded logging or deferred flushing.
+#+END_NOTES
+
+** Sink Variations
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_SRC c++
+class MultiSink : Sink
+{
+  ...
+  vector<unique_ptr<Sink>> sinks;
+};
+#+END_SRC
+
+#+BEGIN_NOTES
+We can make a sink that wraps multiple other sinks and passes entries through to
+them. And we can parameterize that on whether it will stop at the first
+accepting sink, or fan out to all.
+#+END_NOTES
+
+** Sink Variations
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_SRC c++
+class NullSink : Sink
+{
+  ...
+  virtual bool Push(const Entry&) override { return true; }
+  ...
+};
+#+END_SRC
+
+#+BEGIN_NOTES
+We can make a null sink that just returns true from Push().
+Using this, we can write declarative code at the point of construction.
+#+END_NOTES
+
+** Declarative Sink Construction
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_SRC c++
+auto fileSink = [&] () -> std::unique_ptr<Sink> {
+  if (logToFile) {
+    return std::make_unique<FileSink>(generate_filename());
+  } else {
+    return std::make_unique<NullSink>();
+  }
+}();
+#+END_SRC
+
+ - Push down (or up!) the condition using I+LE
+ - Null object pattern encapsulates and removes the condition
+
+#+BEGIN_NOTES
+IILE for inlining factory functions. The declarative part is pushing down the if
+statements. The null object pattern.
+
+Unfortunately the conditional operator can't easily be used here because of the
+common_type requirement.
+#+END_NOTES
+
+** Testing
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_SRC c++
+TEST_CASE( "Factorials are computed", "[factorial]" ) {
+    REQUIRE( Factorial(1) == 1 );
+    REQUIRE( Factorial(2) == 2 );
+    REQUIRE( Factorial(3) == 6 );
+}
+#+END_SRC
+
+Tests are usually declarative.
+#+ATTR_REVEAL: :frag (appear)
+ - idempotent
+ - minimal temporal dependency between statements
+ - leverage constructors/RAII
+ - popularity of sections over fixture management
+
+#+BEGIN_NOTES
+Both of these examples (logging and testing) use macros to hide constructor/RAII
+syntax.
+#+END_NOTES
+
+** Logging & Testing: Global Concerns
+#+REVEAL_HTML: <div class='vertspace2'></div>
+Both logging and testing tend to:
+ - be cross-cutting
+ - have global state to some extent
+
+Some problems inherently involve global state.
+
+#+BEGIN_NOTES
+Declarative style isn't incompatible with global state; sometimes you have to do
+what you have to do.
+
+C++ is a multiparadigm language; declarative style isn't "pure FP or nothing".
+#+END_NOTES
+
+** Command-Line Parsing: Clara
+#+REVEAL_HTML: <div class='vertspace2'></div>
+Phil Nash: /A Composable Command Line Parser/
+
+(CppCon 2017 Lightning Talks)
+#+BEGIN_SRC c++
+auto cli
+  = ExeName( config.processName )
+  | Help( config.showHelp )
+  | Opt( config.listTests )
+      ["-l"]["--list-tests"]
+      ( "list all/matching test cases" )
+  | Opt( config.listTags )
+      ["-t"]["--list-tags"]
+      ( "list all/matching tags" )
+  ...
+#+END_SRC
+https://www.youtube.com/watch?v=Od4bjLfwI-A
+
+#+BEGIN_NOTES
+This is from Catch.
+
+I recommend watching Phil's talk. I think the key is starting with
+composability. This inevitable leads you towards unlocking a declarative style.
+
+Here again we can see hallmarks of declarative style:
+ - use of expressions
+ - overloading operators
+ - of course, declaration
+
+This code says WHAT very clearly. It doesn't say HOW. It doesn't CARE HOW.
+#+END_NOTES
+
+* Design Patterns
+
+** OO Patterns
+#+REVEAL_HTML: <div class='vertspace2'></div>
+Several patterns lean towards declarative style.
+
+Many patterns are about replacing conditions with polymorphism.
+
+ - Null object
+ - Command
+ - Composite
+
+#+BEGIN_NOTES
+These patterns have long been my favourites, but I didn't really understand why
+until I started thinking about how they encourage declarative style.
+
+(Explain these patterns)
+
+These days there is one construction pattern that comes up a lot in declarative
+style.
+#+END_NOTES
+
+** Builder Pattern: Before
+#+REVEAL_HTML: <div class='vertspace2'></div>
+(Not the original GoF builder pattern)
+#+BEGIN_SRC c++
+Schedule s;
+s.AddInterval(fixed{1s});
+auto rep1 = Repeat(5, random_exponential{2s, 2.0});
+s.AddInterval(rep1);
+auto rep2 = Repeat(0, fixed{30s});
+s.AddInterval(rep2);
+#+END_SRC
+
+#+BEGIN_NOTES
+This is not a bad interface to building a schedule.
+
+We've got reasonable readability, some types here to help us out. Some functions
+(~Repeat~) to help us out. Using functions is good, right?
+
+But of course, too many statements. The number of times we actually need to
+reuse a variable (eg ~rep1~) is small compared to the number of times we just
+need to build the schedule and be done.
+
+Of course we could use block scoping (imperative scaffolding!) or rvalues... or
+we could...
+#+END_NOTES
+
+** Builder Pattern: After
+#+REVEAL_HTML: <div class='vertspace2'></div>
+(Not the original GoF builder pattern)
+#+BEGIN_SRC c++
+// Schedule& Schedule::then(interval_t);
+
+auto s = Schedule(interval::fixed{1s})
+  .then(repeat::n_times{5, interval::random_exponential{2s, 2.0}})
+  .then(repeat::forever{interval::fixed{30s}});
+#+END_SRC
+
+#+BEGIN_NOTES
+...do this.
+
+This is becoming more popular.
+
+AKA fluent pattern (Javascript).
+#+END_NOTES
+
+** Builder Pattern: Help from C++17
+#+REVEAL_HTML: <div class='vertspace2'></div>
+P0145: Refining Expression Evaluation Order for Idiomatic C++
+#+BEGIN_SRC c++
+void f()
+{
+  std::string s = "but I have heard it works even if you don't believe in it";
+  s.replace(0, 4, "")
+   .replace(s.find("even"), 4, "only")
+   .replace(s.find(" don't"), 6, "");
+  assert(s == "I have heard it works only if you believe in it");
+}
+#+END_SRC
+
+#+BEGIN_NOTES
+Evaluation order is now specified so that this works.
+#+END_NOTES
+
+** Putting Types to Work
+#+REVEAL_HTML: <div class='vertspace2'></div>
+This "builder pattern" is an ideal place to put strong types to work.
+#+BEGIN_SRC c++
+// Build a request object
+request_t req = make_request()
+  .set_req_field_1(...)
+  .set_req_field_2(...)
+  .set_opt_field(...)
+  .set_opt_field(...)
+  .set_opt_field(...);
+
+// Use it
+send_request(req);
+#+END_SRC
+
+#+BEGIN_NOTES
+A typical situation.
+
+We could put the required fields in the constructor, but we might not want to
+build the request all in one go.
+
+What should send_request do with a request that accidentally doesn't have the
+required fields? Today it most often will assert, or simply send the request and
+get a protocol error.
+
+What we want is for it to fail to compile.
+
+We want to leverage a key ability of expressions over statements: they compose
+on the type axis.
+#+END_NOTES
+
+** Putting Types to Work
+#+REVEAL_HTML: <div class='vertspace2'></div>
+The "normal" construct for this behaviour.
+#+BEGIN_SRC c++
+struct request_t {
+  request_t& set_req_field_1(field_t f) {
+    f1 = f;
+    return *this;
+  }
+  request_t& set_req_field_2(field_t f);
+  request_t& set_opt_field(field_t f);
+
+  field_t f1;
+  // etc ...
+};
+
+request_t make_request() { ... }
+#+END_SRC
+
+#+BEGIN_NOTES
+What we want here is to encode the fact that the required fields have been set
+(or not) in the type of the request object.
+
+Values flow through the computation at runtime; types flow through the
+computation at compile-time.
+
+We want setting required fields to return a different type. Setting optional
+fields should return the same type.
+
+We also want setting fields to be idempotent in the type.
+#+END_NOTES
+
+** Behaviour in the Type
+#+REVEAL_HTML: <div class='vertspace2'></div>
+One way: use a bitfield.
+#+BEGIN_SRC c++
+constexpr static uint8_t OPT_FIELDS = 1 << 0;
+constexpr static uint8_t REQ_FIELD1 = 1 << 1;
+constexpr static uint8_t REQ_FIELD2 = 1 << 2;
+constexpr static uint8_t ALL_FIELDS = OPT_FIELDS | REQ_FIELD1 | REQ_FIELD2;
+#+END_SRC
+
+#+BEGIN_NOTES
+We're going to encode which fields have been set in a bitfield.
+#+END_NOTES
+
+** Behaviour in the Type
+#+BEGIN_SRC c++
+template <uint8_t N>
+struct request_t;
+
+template <>
+struct request_t<0>
+{
+  field_t f1;
+  // etc ...
+};
+
+template <uint8_t N>
+struct request_t : request_t<N-1>
+{
+  request_t<N & ~REQ_FIELD1>& set_req_field1(field_t f) {
+    this->f1 = f;
+    return *this;
+  }
+  request_t<N & ~REQ_FIELD2>& set_req_field2(field_t f);
+  request_t& set_opt_field(field_t f);
+};
+#+END_SRC
+
+#+BEGIN_NOTES
+Data members in the base class.
+
+Clearing bits in a bitfield is idempotent. The return type of ~set_req_field_1~
+might be the same as the type of the this.
+
+Clearing bits reduces the NTTP. And through recursion everything inherits.
+Finally we get down to the class with only optional fields left unset, and we
+can never go below that.
+#+END_NOTES
+
+** Behaviour in the Type
+#+REVEAL_HTML: <div class='vertspace2'></div>
+Use ~= delete~ to enable the ~send_request~ function only for a
+correctly-filled-in request.
+#+BEGIN_SRC c++
+request_t<ALL_FIELDS> make_request();
+
+template <uint8_t N>
+void send_request(const request_t<N>& req) = delete;
+
+void send_request(const request_t<OPT_FIELDS>& req);
+#+END_SRC
+
+#+BEGIN_NOTES
+All that's left are the driver functions.
+
+~make_request~ returns a request with all the bits set.
+
+We have to declare, but delete ~send_request~ for the "higher level" types so
+that they won't match the "lower level" overload. (Remember "higher level" types
+derive from "lower level" types.)
+
+This is nice use of types. Any non-setter functions can go in the zero
+specialization. The type machinery is fairly lightweight - no enable_if, no
+SFINAE, correct code results in few type instantiations. Of course everything
+vanishes at runtime.
+
+No includes! All in the language. Fast compile times?
+#+END_NOTES
+
+* Ranges
+
+** Ranges: Example 0
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_SRC c++
+dates_in_year(2015)    // 0. Make a range of dates.
+  | by_month()         // 1. Group the dates by month.
+  | layout_months()    // 2. Format the month into a range of
+                       //    strings.
+  | chunk(3)           // 3. Group the months that belong
+                       //    side-by-side.
+  | transpose_months() // 4. Transpose the rows and columns
+                       //    of the side-by-side months.
+  | view::join         // 5. Ungroup the side-by-side months.
+  | join_months()      // 6. Join the string of the transposed
+                       //    months.
+#+END_SRC
+
+#+BEGIN_NOTES
+From Eric's 2015 C++Now/CppCon talk "Ranges for the Standard Library".
+
+This is one expression. Eric said: Composable. Lots of parts are reusable. It
+works with infinite ranges. Can show N months side-by-side (3 chosen).
+
+No Loops!!! (with 3 exclamation marks). But he went over that point very
+quickly. Perhaps it was a throwaway reference to Sean's work. But he didn't
+emphasize why no loops was important.
+
+Correct by construction. We don't have to do much to convince ourselves that
+it's correct. It's built that way.
+#+END_NOTES
+
+** Ranges: Example N
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_SRC c++
+  std::mt19937 gen(std::random_device{}());
+  auto rsvps = rsvp_json                           // json is a valid range
+    | view::remove_if([](auto&& elem) {
+          return "yes" != elem.at("response"); })  // filter out non-"yes" RSVP responses
+    | view::transform([](auto&& elem) {
+          return elem["member"]["name"].dump(); }) // keep name as string
+    | ranges::to_vector                            // convert lazy range to vector
+    | action::shuffle(gen);                        // random shuffle vector elements
+
+#+END_SRC
+From https://github.com/CoreCppIL/raffle
+
+#+BEGIN_NOTES
+This from the Core C++ Israel user group. It's the code they use to randomly
+pick from meetup.com RSVPs. This is only part of the code but the whole of the
+code is designed to fit on one slide.
+
+Once again this whole thing is a composition of two declarations and lots of
+expressions.
+#+END_NOTES
+
+** Ranges: Readability is Familiarity
+#+REVEAL_HTML: <div class='vertspace2'></div>
+
+What does this do?
+
+#+BEGIN_SRC apl
++\⍳10
+#+END_SRC
+
+#+BEGIN_NOTES
+Who knows what language this is?
+
+Yes, that's a greek letter.
+#+END_NOTES
+
+** Ranges: Readability is Familiarity
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_SRC c++
+int arr[] = {1,2,3,4,5,6,7,8,9,10};
+int sum = 0;
+for (int i = 0; i < 10; ++i)
+{
+  sum += arr[i];
+  arr[i] = sum;
+}
+#+END_SRC
+
+#+BEGIN_NOTES
+Is this code correct?
+
+What is the performance?
+
+How sure are you? How long do you need to look at this code to know what it
+does?
+
+How likely is this code to retain its properties?
+#+END_NOTES
+
+** Ranges: Readability is Familiarity
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_SRC c++
+std::array<int, 10> input;
+std::iota(input.begin(), input.end(), 1);
+std::partial_sum(input.begin(), input.end(), input.begin());
+#+END_SRC
+
+#+BEGIN_NOTES
+Is this code correct? (You may have to look up whether ~partial_sum~ allows
+"overwriting" of the range - it's not obvious.
+
+What is the performance?
+
+How sure are you? How long do you need to look at this code to know what it
+does?
+
+How likely is this code to retain its properties?
+#+END_NOTES
+
+** Ranges: Readability is Familiarity
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_SRC apl
++\⍳10
+#+END_SRC
+#+BEGIN_SRC c++
+auto r = view::iota(1)
+       | view::take(10)
+       | view::partial_sum(std::plus<>{});
+#+END_SRC
+
+#+BEGIN_NOTES
+We can be pretty sure this is correct.
+
+It is likely to remain correct.
+
+You have to put some trust in the implementer of the functions. But "view" is a
+good sign that these things don't take up a lot of space and only hold exactly
+what they need to advance.
+#+END_NOTES
+
+** Readable & Robust
+#+REVEAL_HTML: <div class='vertspace2'></div>
+Code that says WHAT is just as readable than code that says HOW.
+
+We are used to seeing code that says HOW. It's more familiar.
+
+Code that says WHAT is more likely to remain robust.
+
+#+BEGIN_NOTES
+I would say MORE readable.
+#+END_NOTES
+
+** A Common Concern
+#+REVEAL_HTML: <div class='vertspace2'></div>
+Are such constructs zero-cost?
+
+I feel uneasy when I can't clearly see the cost of what I'm writing.
+
+Ultimately, I have to trust something.
+
+#+BEGIN_NOTES
+There are two kinds of trust: social trust, and security-theoretic trust.
+(explain)
+
+Most of the time we trust the compiler in a security-theoretic sense. We
+certainly trust the hardware that way. We have no choice.
+
+The fiction that we know what the compiler is doing all the time hasn't been
+true for a while. Just watch one of Chandler's live coding talks. He's forgotten
+more about how optimization works than I'll ever know, and he still discovers
+something surprising every time he measures.
+
+We need to learn to let go of "social trust" and accept "security-theoretic
+trust" - because there is no choice. Once we do that, we see that trusting a
+co-worker who wrote the interface is no more scary than trusting the people at
+Intel who designed the CPU. In fact, probably less scary.
+#+END_NOTES
+
+** Ranges: "Wholemeal Programming"
+#+REVEAL_HTML: <div class='vertspace2'></div>
+Declarative style is about processing data pipelines.
+
+Components can alter either the range itself, or the elements, or both.
+
+#+ATTR_REVEAL: :frag (appear)
+ - generators
+ - selections
+ - transformations
+ - permutations
+ - reductions
+
+#+BEGIN_NOTES
+Generators: iota, repeat, generate, etc.
+
+Selections: filters like ~remove_if~, take and drop type functions.
+
+Transformations: projection functions.
+
+Reductions: folds (and sometimes unfolds).
+
+Combos of these where convenient, e.g. chunk.
+
+In functional circles this is sometimes called "Wholemeal programming" as
+distinct from the "piecemeal programming" of imperative loops and conditions.
+#+END_NOTES
+
+** Unix Pipes
+#+REVEAL_HTML: <div class='vertspace2'></div>
+Declarative style is about processing data pipelines.
+
+When you have composable pieces, exploring data is quick and easy.
+
+#+ATTR_REVEAL: :frag (appear)
+ - generators (find)
+ - selections (grep, uniq)
+ - transformations (cut, tr)
+ - permutations (sort)
+ - reductions/unfolds (wc, xargs)
+
+#+BEGIN_NOTES
+What's the point here? These are very easy to string together, so that they
+support exploratory work.
+
+Once again it's all about composition.
+#+END_NOTES
+
+* Where C++ is Strong
+
+** RAII, Constructors, Destructors
+#+REVEAL_HTML: <div class='vertspace2'></div>
+RAII is the bread-and-butter of C++ programming.
+
+It's a natural fit for a declarative style.
+
+#+BEGIN_NOTES
+Obviously, RAII is all about declaring something and letting the C++ machinery
+take care of lifetime.
+#+END_NOTES
+
+** Avoid sentinel constructors
+#+REVEAL_HTML: <div class='vertspace2'></div>
+They harm reason-ability.
+
+They necessitate/proliferate special sentinel values.
+
+They may introduce use-time checks for "actually initialized".
+
+#+BEGIN_NOTES
+Sentinel-construction is viral, like ~const~ but in a bad way. It spreads
+downstream. If you require a class to be nullary-constructible, you require all
+its members to be sentinel-constructible, and so on.
+
+See ~std::variant~...
+
+Note: ~std::vector~ "requires" nullary construction, but only for ~resize~ -
+if you never call ~resize~, you're fine without.
+#+END_NOTES
+
+** Initialization
+#+REVEAL_HTML: <div class='vertspace2'></div>
+Initialization is complex. But initialization of value types is getting easier.
+ * aggregate initialization
+ * rule of zero
+ * UDLs for extra expressiveness
+
+#+BEGIN_NOTES
+Scoped ~enum~ + UDLs = goodness (FourCC)
+#+END_NOTES
+
+** Functions & lambdas
+#+REVEAL_HTML: <div class='vertspace2'></div>
+Functions:
+ * turn statements into expressions
+ * give expressions names
+ * encapsulate conditions
+ * are the optimizer's bread and butter
+
+#+BEGIN_NOTES
+Functions are wonderful. Higher order functions are in some sense the FP
+equivalent of OO's dependency injection.
+
+See also: no raw loops.
+#+END_NOTES
+
+** Function overloads, templates
+#+REVEAL_HTML: <div class='vertspace2'></div>
+Parametric polymorphism: enable use of functions without conditionals.
+#+BEGIN_SRC c++
+template <typename A, typename B = A,
+          typename C = std::common_type_t<A, B>,
+          typename D = std::uniform_int_distribution<C>>
+inline auto make_uniform_distribution(const A& a,
+                                      const B& b = std::numeric_limits<B>::max())
+  -> std::enable_if_t<std::is_integral_v<C>, D>
+{
+  return D(a, b);
+}
+#+END_SRC
+Andy Bond: /AAAARGH!?/ (CppCon 2016)
+
+https://www.youtube.com/watch?v=ZCGyvPDM0YY
+
+#+BEGIN_NOTES
+Adopting Almost-Always-Auto Reinforces Good Habits?
+#+END_NOTES
+
+** Function overloads, templates
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_SRC c++
+template <typename A, typename B = A,
+          typename C = std::common_type_t<A, B>,
+          typename D = std::uniform_real_distribution<C>>
+inline auto make_uniform_distribution(const A& a,
+                                      const B& b = B{1})
+  -> std::enable_if_t<std::is_floating_point_v<C>, D>;
+
+class uniform_duration_distribution;
+
+template <typename A, typename B = A,
+          typename C = std::common_type_t<A, B>,
+          typename D = uniform_duration_distribution<C>>
+inline auto make_uniform_distribution(const A& a,
+                                      const B& b = B::max()) -> D;
+#+END_SRC
+
+#+BEGIN_NOTES
+With relatively little effort, we can make a type-safe uniform distribution for
+chrono durations. Really useful for improving call sites and unlocking the
+ability for users to be type-safe.
+
+I use this all the time in my day job for implementing randomized network
+backoffs.
+#+END_NOTES
+
+** Structured bindings
+#+REVEAL_HTML: <div class='vertspace2'></div>
+Workaround for a limitation of functions: they can only return one thing.
+
+Structured bindings allow multiple "atomic" declarations.
+
+#+BEGIN_NOTES
+We think about these often in the context of ~if~-initialization, and they do go
+well together, but if you're generally trying to avoid conditions,
+~if~-initialization might become less important.
+
+But the principle of useful return is important.
+#+END_NOTES
+
+** Other features
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+ATTR_REVEAL: :frag (appear)
+ * Guaranteed copy elision P0135
+ * Evaluation order guarantees P0145
+ * Fold expressions
+
+#+BEGIN_NOTES
+Guaranteed copy elision: obviously really good for leveraging functions.
+
+Evaluation order guarantees are great for the builder pattern we saw earlier.
+
+Fold expressions offer increased flexibility of interface and the chance to get
+n-ary application for free with a simple binary function interface. Much like
+std::accumulate, but without the "container".
+#+END_NOTES
+
+* Where C++ is weaker
+
+** Inconsistencies
+#+REVEAL_HTML: <div class='vertspace2'></div>
+In C++17, we gained ~if~- and ~switch~-initializers.
+#+BEGIN_SRC c++
+if (auto [it, inserted] = m.emplace("Perry", "Platypus"); inserted)
+{
+  ...
+}
+#+END_SRC
+But no love for the expression equivalent of ~if~.
+#+BEGIN_SRC c++
+auto result =
+  (auto [it, inserted] = m.emplace("Perry", "Platypus"); inserted)
+  ? // some expression ...
+  : // some other expression ...
+#+END_SRC
+
+#+BEGIN_NOTES
+~if~ and the ternary operator ostensibly do the same thing, but not really.
+
+Partly because ~if~ is a statement and doesn't need to obey the rules of the
+type system in its two branches.
+#+END_NOTES
+
+** Heritage: overly-broad statements
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_SRC c++
+std::lock_guard<std::mutex>(mut); // oops
+#+END_SRC
+See also:
+ * most vexing parse
+ * discarded-value expression
+
+#+BEGIN_NOTES
+Loads of hard-to-find bugs resulting from these issues.
+#+END_NOTES
+
+** Heritage: assignment
+#+REVEAL_HTML: <div class='vertspace2'></div>
+Assignment is an expression.
+ * implementation burden: lvalues
+ * ~operator=~ must be a member function
+ * but ~operator@=~ can be free?
+ * chained assignments? convenient but a smell
+
+Assignment is blurred with construction.
+ * historic: rule of N
+ * conflicting sink parameter advice
+ * now it's worse: move vs copy, reference qualifiers
+
+#+BEGIN_NOTES
+Assignment operator "has to" return lvalue ref.
+
+Remember the previous quote from The C++ Prog lang: "It cannot be overemphasized
+that /assignment and initialization are different operations/."
+
+Example from The C++ Programming Language: "The definition of ~operator+=~ for
+~complex~ cannot be deduced from the definitions of ~operator+~ and ~operator=~.
+
+But in practice, anyone deviating from the semantics would receive short shrift
+in a code review.
+#+END_NOTES
+
+** Legacy type system: "functions"
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_SRC c++
+int steps = 0;
+auto f = [&](int x) { ++steps; return x / 2; };
+auto g = [&](int x) { ++steps; return 3 * x + 1; };
+
+// why doesn't this work?
+auto h = (x % 2 == 0) ? f : g;
+#+END_SRC
+
+#+BEGIN_NOTES
+Of course, we know why it doesn't work. It doesn't work because we don't have
+proper function types (which is to say, function signature types) in the
+language. We have functions, function pointers, PMFs, PMDs, lambdas, bind
+expressions...
+
+We have reference-qualifiers, const, volatile, constexpr, noexcept, even
+abominable function types. But for all that power we don't have a simple way in
+the language to use or express type-equality in terms of a function's signature.
+#+END_NOTES
+
+* Operator Overloading
+
+** Expressive user-defined types
+#+REVEAL_HTML: <div class='vertspace2'></div>
+Regular types are great!
+
+Operators give us compositional style with concision.
+
+#+BEGIN_SRC c++
+// which would you rather see?
+
+// option 1
+a = operator+(x, operator*(y, z));
+
+// option 2
+a = x + y * z;
+#+END_SRC
+
+#+BEGIN_NOTES
+Potentially huge readability gain here.
+
+Let's explore the boundaries a bit.
+#+END_NOTES
+
+** Operator overloading advice
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+ATTR_REVEAL: :frag appear
+#+BEGIN_QUOTE
+#+REVEAL_HTML: <p>"When in doubt, do as the <tt>int</tt>s do."</p>
+#+REVEAL_HTML: <div></div><div class='author'>
+-- Scott Meyers, /More Effective C++/
+#+REVEAL_HTML: </div>
+#+END_QUOTE
+#+REVEAL_HTML: <br clear="all"/>
+#+ATTR_REVEAL: :frag appear
+#+BEGIN_QUOTE
+"It is probably wise to use operator overloading primarily to mimic conventional
+use of operators."
+#+REVEAL_HTML: <div></div><div class='author'>
+-- Bjarne Stroustrup, /The C++ Programming Language/
+#+REVEAL_HTML: </div>
+#+END_QUOTE
+#+REVEAL_HTML: <br clear="all"/>
+#+ATTR_REVEAL: :frag appear
+#+BEGIN_QUOTE
+"Syntax abuse is cancer"
+#+REVEAL_HTML: <div></div><div class='author'>
+-- /​u/​svn, reddit /​r/​cpp
+#+REVEAL_HTML: </div>
+#+END_QUOTE
+
+#+BEGIN_NOTES
+Arguments against operator overloading:
+
+People don't like re-using operators to mean arbitrary, nonconventional things.
+(cf trademarks)
+
+People don't like the potential for operators to impose performance costs
+through hidden computation and through binary functions calls rather than n-ary.
+#+END_NOTES
+
+** Operator overloading
+#+REVEAL_HTML: <div class='vertspace2'></div>
+When in doubt, do what operator+ does?
+
+#+BEGIN_NOTES
+Maybe we should try to find the most "normal" operator and see if we can divine
+some guidelines for overloading.
+#+END_NOTES
+
+** Operator+ Properties
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+REVEAL_HTML: <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+#+REVEAL_HTML: <tr>
+#+REVEAL_HTML: <th class="org-left">Property</td>
+#+REVEAL_HTML: <th class="org-left">Math(s)</td>
+#+REVEAL_HTML: <th class="org-left">C++</td>
+#+REVEAL_HTML: </tr>
+#+REVEAL_HTML: <tr>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="1">Closed</div></td>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="2">&#x2714;</div></td>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="3">&#x2717; (overflow)</div></td>
+#+REVEAL_HTML: </tr>
+#+REVEAL_HTML: <tr>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="4">Associative</div></td>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="5">&#x2714;</div></td>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="6">&#x2717; (floating point)</div></td>
+#+REVEAL_HTML: </tr>
+#+REVEAL_HTML: <tr>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="7">Commutative</div></td>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="8">&#x2714;</div></td>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="9">&#x2717; (strings)</div></td>
+#+REVEAL_HTML: </tr>
+#+REVEAL_HTML: <tr>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="10">Has Identity</div></td>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="11">&#x2714;</div></td>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="12" style="float: inline-start;">&#x2714;</div><div class="fragment" data-fragment-index="13">&#x2714;(+0.0, -0.0!)</div></td>
+#+REVEAL_HTML: </tr>
+#+REVEAL_HTML: </tbody>
+#+REVEAL_HTML: </table>
+
+#+BEGIN_NOTES
+This tells me that programming has its own conventions separate from the
+conventions of mathematics.
+#+END_NOTES
+
+** C++ is Not Javascript
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+REVEAL_HTML: <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+#+REVEAL_HTML: <tr>
+#+REVEAL_HTML: <th class="org-left">Expression</td>
+#+REVEAL_HTML: <th class="org-left">True?</td>
+#+REVEAL_HTML: </tr>
+#+REVEAL_HTML: <tr>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="1">0 == []</div></td>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="2">&#x2714;</div></td>
+#+REVEAL_HTML: </tr>
+#+REVEAL_HTML: <tr>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="3">0 == "0"</div></td>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="4">&#x2714;</div></td>
+#+REVEAL_HTML: </tr>
+#+REVEAL_HTML: <tr>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="5">"0" == []</div></td>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="6">&#x2717;</div></td>
+#+REVEAL_HTML: </tr>
+#+REVEAL_HTML: </tbody>
+#+REVEAL_HTML: </table>
+
+#+BEGIN_NOTES
+On the other hand, we do try to follow mathematical conventions mostly.
+
+In C++, equality is an equivalence relation.
+#+END_NOTES
+
+** Operators in Compiler History
+(from https://jeffreykegler.github.io/personal/timeline_v3)
+#+REVEAL_HTML: <div class='vertspace2'></div>
+1956: The IT Compiler
+#+ATTR_REVEAL: :frag appear
+#+BEGIN_QUOTE
+"...the first really /useful/ compiler."
+#+REVEAL_HTML: <div></div><div class='author'>
+-- Donald E Knuth
+#+REVEAL_HTML: </div>
+#+END_QUOTE
+
+#+REVEAL_HTML: <br/>
+#+ATTR_REVEAL: :frag appear
+But it didn't have operator precedence as we know it today.
+#+ATTR_REVEAL: :frag appear
+#+BEGIN_QUOTE
+"The lack of operator priority ... in the IT language was the most frequent
+single cause of errors by the users of that compiler."
+#+REVEAL_HTML: <div></div><div class='author'>
+-- Donald E Knuth
+#+REVEAL_HTML: </div>
+#+END_QUOTE
+
+#+BEGIN_NOTES
+IT (Internal Translator) was a compiler for the IBM 650. Perhaps the first
+compiler that we would recognize as one in the modern sense.
+#+END_NOTES
+
+** Operator overloading learnings
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+ATTR_REVEAL: :frag (appear)
+ - operators communicate properties
+ - operators make sense for binary functions
+ - operators should be conventional
+
+#+BEGIN_NOTES
+Infix notation conveys properties more naturally?
+Commutativity, Associativity, Closedness.
+
+Infix expressions are more malleable, easier to move around, compose, use parens
+to clarify, etc.
+
+Compilers can't collapse n functions calls into an n-ary function call. Where
+binary functions are the main/only way to compose your types, overloading
+operators can make a lot of sense.
+
+Shorter = more readable.
+
+We get to define our own conventions -- no need for dogmatic reliance on maths.
+#+END_NOTES
+
+** Operator Overloading and Futures
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+REVEAL_HTML: <img src='futures.svg'/>
+#+BEGIN_SRC c++
+// imaginary-ish code
+my_future<A> f(X);
+my_future<B> g1(A);
+my_future<C> g2(A);
+my_future<D> h(B, C);
+#+END_SRC
+
+#+BEGIN_NOTES
+Imagine a simple composition of asynchronous functions that return futures.
+
+Notice that their composition can itself be viewed as a function from X to
+future<D>.
+
+I'm not making any assumptions about how ~my_future~ is implemented here.
+#+END_NOTES
+
+** Operator Overloading and Futures
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+ATTR_REVEAL: :frag appear
+#+BEGIN_SRC c++
+auto fut = f();
+auto split1 = fut.then(g1);
+auto split2 = fut.then(g2);
+auto fut2 = when_all(split1, split2).then(h);
+#+END_SRC
+#+ATTR_REVEAL: :frag appear
+#+BEGIN_SRC c++
+auto fut = f() > (g1 & g2) > h;
+#+END_SRC
+#+ATTR_REVEAL: :frag appear
+Operator overloading can clarify the computational structure when combining
+futures/promises.
+
+#+BEGIN_NOTES
+When we can use operators to compose futures, it becomes easier to see the
+computational structure of the composition.
+
+Business logic vs mechanism of concurrency vs strategy of parallelism.
+
+The question is, what to use for an operator.
+#+END_NOTES
+
+** Heritage: operators
+#+REVEAL_HTML: <div class='vertspace2'></div>
+C++ inherits pretty much all of its operators from C.
+
+We also inherit some fixed semantics (despite operator overloading).
+
+Operators can be amazing for expressivity of code and declarative constructs.
+
+#+BEGIN_NOTES
+Operators have a huge potential for expressing declarative code.
+
+Unfortunately C++ operators are one of parts of the language that gets the least
+attention.
+
+There is a lot potentially on the table here. We're missing a lot of
+expressivity in new areas, especially involving composition of monoidal and
+monadic types, because we lack the power in overloading operators.
+#+END_NOTES
+
+** Heritage: operators
+#+REVEAL_HTML: <div class='vertspace2'></div>
+Operators are hard to deal with in C++.
+
+#+ATTR_REVEAL: :frag (appear)
+ * fixed syntactic set
+ * fixed precedence
+ * fixed associativity
+ * fixed arity
+ * fixed fixity
+ * fixed evaluation semantics (which may change on overload)
+ * ADL
+
+#+BEGIN_NOTES
+No wonder overloading operators is such an unloved part of the language. No
+wonder operator overloading is frowned upon in many circles. We can't make them
+mean what they should. We can't make them do what they should. We can't make
+them very easy to use. So a lot of people look at operator overloading as syntax
+abuse.
+
+You get to use operator overloading pretty much if you're concatenating
+string-like things, or writing a "numeric" class like a matrix, or providing a
+way to print your type.
+
+I would love to see some of these shortcomings tackled. Many of these things are
+"language rules" that could be expressed in code. Can we do for operators what
+metaclasses do for user defined types?
+#+END_NOTES
+
+* Where C++ is getting better
+
+** "Imperative safety gear"
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+ATTR_REVEAL: :frag (appear)
+ * better warnings
+ * static analysis
+ * ~[[nodiscard]]~ attribute (use on constructors?)
+ * ~[[fallthrough]]~ attribute
+ * ~if~-initializer
+
+#+BEGIN_NOTES
+We're starting to get the ability for "compilers" to help us reason about
+statement sequencing. And to avoid some of the obvious historical errors.
+
+~nodiscard~ on constructors (or factory functions) would prevent the unnamed
+lock issue.
+
+Use ~nodiscard~ on every function!
+#+END_NOTES
+
+** Heritage: Declaration Syntax
+#+REVEAL_HTML: <div class='vertspace2'></div>
+Something we're too close to to appreciate how painful it is?
+#+BEGIN_SRC c
+int (*daytab)[13];
+int *daytab[13];
+
+char (*(*x[3])())[5];
+#+END_SRC
+
+K&R: /5.12 Complicated Declarations/
+
+#+BEGIN_QUOTE
+"C is sometimes castigated for the syntax of its declarations, particularly ones
+that involve pointers to functions."
+#+END_QUOTE
+#+BEGIN_QUOTE
+"...because declarations cannot be read left-to-right, and because parentheses
+are over-used."
+#+END_QUOTE
+
+#+BEGIN_NOTES
+I'm not knocking C here. This was fine in 1972!
+#+END_NOTES
+
+** Heritage: Declaration Syntax
+#+REVEAL_HTML: <div class='vertspace2'></div>
+Prefer ~using~ over ~typedef~.
+
+Prefer trailing return syntax in aliases.
+
+Think of ~auto(*)~ as a token that means "pointer-to-function".
+
+#+BEGIN_SRC c++
+typedef int (*FP)(float, string);
+
+using FP = auto(*) (float, string) -> int;
+#+END_SRC
+
+See also: /East-const vs West-const/
+
+(doubtless coming soon to a lightning talk venue near you)
+
+** Richness of library help
+#+REVEAL_HTML: <div class='vertspace2'></div>
+Seemingly-unimportant helper functions (or metafunctions) can be very important
+in avoiding conditionals.
+
+#+ATTR_REVEAL: :frag (appear)
+ * ~std::exchange~
+ * ~std::as_const~
+ * ~std::apply~
+ * expanding ~type_traits~
+ * monadic interface to ~std::optional~
+
+#+BEGIN_NOTES
+I love ~std::exchange~ - one of the most underappreciated functions in the STL.
+#+END_NOTES
+
+** Richness of library help
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_SRC c++
+template <typename T>
+decltype(auto) identity(T&& t) {
+  return std::forward<T>(t);
+}
+#+END_SRC
+
+#+BEGIN_SRC c++
+template <typename T>
+auto always(T&& t) {
+  return [x = std::forward<T>(t)](auto&&...) { return x; };
+};
+#+END_SRC
+
+#+BEGIN_NOTES
+These are examples of a couple functions that exist in functional languages. The
+use of them isn't apparent to non-functional programmers. Often the use lies in
+getting rid of conditionals.
+
+std::identity was in the original SGI STL.
+
+If you do TMP, you're probably used to the idea of needing these kinds of
+metafunctions. TMP doesn't have assignment, so it's by nature a lot more
+declarative. common_type_t with a single argument is often used as the identity
+function.
+#+END_NOTES
+
+* Guidelines for Declarative Code
+
+** Replacing Conditionals
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+REVEAL_HTML: <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+#+REVEAL_HTML: <tr>
+#+REVEAL_HTML: <th class="org-left">Style</td>
+#+REVEAL_HTML: <th class="org-left">Signature Element</td>
+#+REVEAL_HTML: <th class="org-left">Elimination Strategy</td>
+#+REVEAL_HTML: </tr>
+#+REVEAL_HTML: <tr>
+#+REVEAL_HTML: <td class="org-left">Imperative</td>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="1">Statement</div></td>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="2">multi-computation</div></td>
+#+REVEAL_HTML: </tr>
+#+REVEAL_HTML: <tr>
+#+REVEAL_HTML: <td class="org-left">Object-Oriented</td>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="3">Object construction</div></td>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="4">polymorphism</div></td>
+#+REVEAL_HTML: </tr>
+#+REVEAL_HTML: <tr>
+#+REVEAL_HTML: <td class="org-left">Functional</td>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="5">Function call</div></td>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="6">higher order function</div></td>
+#+REVEAL_HTML: </tr>
+#+REVEAL_HTML: <tr>
+#+REVEAL_HTML: <td class="org-left">Generic</td>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="7">Type instantiation</div></td>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="8">traits class</div></td>
+#+REVEAL_HTML: </tr>
+#+REVEAL_HTML: </tbody>
+#+REVEAL_HTML: </table>
+
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+ATTR_REVEAL: :frag appear :frag_idx 9
+The Conditional-Replacement Meta-Pattern.
+
+#+BEGIN_NOTES
+ - fsel intrinsic on XBox 360
+ - null object pattern
+ - std::sort comparator
+ - pointer_traits
+
+This metapattern unlocks composition in all these cases. Because it turns
+statements into expressions suitable for the domain.
+#+END_NOTES
+
+** Replacing Conditionals
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+ATTR_REVEAL: :frag (appear)
+ - Push conditionals down the callstack
+   - intrinsic to data structures
+   - optional/monadic interface
+   - handle at leaf, don't leak
+ - Push conditionals up the callstack
+   - dependency injection
+   - higher-order functions
+   - power to the caller
+   - lifted to root, abstracted
+ - Goal: total functions
+
+#+BEGIN_NOTES
+Treat conditionals like we treat errors.
+
+Handle them and encapsulate them at the leaf. Or push them up to the root and
+abstract the condition in a construct that makes sense for your programming
+paradigm.
+#+END_NOTES
+
+** Replacing conditionals => fewer statements
+#+REVEAL_HTML: <div class='vertspace2'></div>
+When you replace/encapsulate conditionals:
+ - simpler, total functions
+ - simpler loops (no break/continue without conditions)
+
+** Interface Guidelines
+#+REVEAL_HTML: <div class='vertspace2'></div>
+ - Start with composition
+ * Consider builder/fluent-style
+ * Operator overloading can be great
+ * Identify monoids
+
+#+BEGIN_NOTES
+ - When building an interface, start with composition
+ * Consider fluent-style/"builder pattern"
+#+END_NOTES
+
+** Code Guidelines
+#+REVEAL_HTML: <div class='vertspace2'></div>
+ * Favour expressions over statements
+ * Favour declarations over assignments
+ * Push conditionals up/down, aim for unconditional code
+ * Leverage the power of ~return~
+ - Do you really need nullary construction?
+
+#+BEGIN_NOTES
+ * Recognize imperative scaffolding, use it if you must, but better to obviate
+   it
+ * Use I+LEs where appropriate for initialization
+ - encapsulate conditions, abstract choices
+#+END_NOTES
+
+* Notes                                                            :noexport:

@@ -1,0 +1,368 @@
+Easy to Use, Hard to Misuse: Declarative Style in C++
+
+* Abstract
+We say that interfaces should be easy to use and hard to misuse. But how do we
+get there? In this talk I will demonstrate how using declarative techniques in
+APIs, functions, and plain old "regular" code can help.
+
+We'll look at what is meant by "declarative style" in C++; explore why
+declarative interfaces are desirable and how to construct them; and take an
+in-depth look at which features of C++ help us write in a declarative style.
+
+I want to deconstruct C++ a bit, examine what we're doing and what makes the
+good parts good, and from that reconstruct some best practices. Many of us are
+already writing code following piecemeal modern advice such as "no raw loops",
+or "almost always auto", or C++ core guideline recommendations. In many cases,
+this advice translates to writing more declarative code; being deliberate about
+exploring and using declarative techniques gives us insight we can apply more
+widely.
+
+* Bio
+Ben has been writing games for over 20 years, and in C++ for most of that. He is
+currently a Principal Engineer at Blizzard Entertainment where he works on the
+Battle.net team. He's always looking for useful new techniques in C++, and he
+likes functional programming.
+
+Ben is the presenter of several previous C++Now and CppCon talks, most recently,
+with Jason Turner, "constexpr ALL the Things!" at C++Now and CppCon 2017.
+
+* Tags
+declarative style, expressive code, interfaces, APIs, libraries
+
+* Session level
+Beginner, Intermediate, Advanced, Expert
+
+* Audiences
+function authors, library authors, application developers
+
+* Outline
+** Introduction: a short section covering motivation and existing practice
+ - What is declarative code?
+ - How are we using it already?
+ - Guidelines and idiom
+ - "Easy to use" and "hard to misuse": the yin and yang of composition and
+    declarative style
+
+** Expressions vs statements: deconstructing C++ from a declarative point of view
+ - Composition
+ - Types, values, safety
+ - Implicit and explicit constraints
+ - The legacy from C (and other languages)
+
+** Declarative examples
+ - no raw loops
+ - almost always auto
+ - the core guidelines
+ - logging, future, ranges, other...
+
+** Where C++ falls short for declarative code
+ - lacking/inconsistent language features
+ - tunnel vision in standardization
+
+** Where C++ shines for declarative code
+ - Constructors & initialization techniques
+ - Operator overloading
+ - Expression templates
+ - Modern constructs
+
+** Declarative interface guidelines
+ - Function naming, argument considerations
+ - General techniques
+
+* Other fields
+ - Preferred session length: 90 mins
+ - Min session length: 90 mins
+ - Max session length: 90 mins
+
+This talk is new for C++Now 2018.
+
+Video links:
+ - https://www.youtube.com/watch?v=HMB9oXFobJc "constexpr ALL the Things", C++Now 2017 (with Jason Turner)
+ - https://www.youtube.com/watch?v=ojZbFIQSdl8 "Using Types Effectively", CppCon 2016
+
+* Notes
+IIFE Immediately invoked function expression
+IILE Immediately invoked lambda expression
+IIILE Immediately invoked initializing lambda expression
+IIIILE Immediately-invoked inline initializing lambda expression
+
+How do expressions compose?
+a . b . c
+Here, . is any function or operator.
+They compose on the value axis.
+They compose on the type axis -> checkable at compile time!
+
+How do statements compose?
+a . b . c
+Here, . is temporal sequencing.
+There is no direct way to constrain this.
+No type checking.
+Some value checking is done with asserts.
+We have (varyingly implicit) constraints with pre- and post-conditions.
+We have the implicit constraints imposed by variable lifetime extents.
+We have constraints imposed by variable scopes -> this is checkable, so we do it a lot!
+Reusing variables is a bad thing.
+
+Many of our guidelines, best practices, idioms, and much of our tooling, static
+and dynamic analysis, is in service of checking the implicit constraints around
+statement composition.
+
+Since C, we have been able to use expressions as statements. But this is not
+generally a very good thing.
+Now we have the nodiscard attribute to guard against errors.
+Modula-3: "expression is not a statement".
+
+Can we turn statements into expressions?
+That's what functions do. (And lambdas - hence the rising popularity of IIILEs.)
+
+Some statements have expression "equivalents" - if...else is equivalent to ?:
+operator. But not really now since we have if-initializer.
+
+--
+
+Assignments in C are expressions
+As in B, ALGOL 68 & LISP
+
+Assignments use = rather than := or something else
+As in Superplan, popularized by FORTRAN 57
+
+--
+
+Expressive code is made of expressions?
+Expression - Statement dichotomy
+
+Expressions have values
+Statements don't
+
+Expressions have types
+Statements don't
+
+Statements have state
+Mutable state causes cognitive load
+Turn statements into expressions
+Declarative programming
+
+"No raw loops" is a subset of "strive for declarative code"
+"No raw loops" turns statements (for, while) into expressions (function calls)
+Can we do the same for other statements (if, switch)
+
+--
+
+Readability is familiarity: declarative edition
+APL line -> “traditional” C++ -> ranges
+
+The “we know what the computer is doing” belief
+Hasn’t been true for a while. cf. Chandler’s talks
+
+C -> C++ -> declarative C++
+
+--
+
+Given:
+
+weak_ptr<X> wp;
+
+Then how to write:
+
+Y y;
+{
+  auto sp = wp.lock();
+  if (sp) y = sp->GetY();
+}
+
+Declaratively?
+
+Statement is not an expression…
+
+if-intializer doesn’t quite work well
+
+if (auto sp = wp.lock(); sp) { sp->GetY(); } else { Y{} }
+
+structured bindings don’t work well?
+
+auto [sp, x] = wp.lock(), sp->GetY() ???
+
+ternary operator? No, this has a double lock
+
+auto y = wp.lock() ? wp.lock()->GetY() : {};
+
+Maybe if we could write ternary-operator-initializer:
+
+auto y = [auto sp = wp.lock(), sp] ? sp->GetY() : {};
+
+(note we can’t use parens because that would make an expression…)
+
+There is one way to do this: make a statement into an expression. With an IIFE.
+
+auto y = [&] () {
+  if (auto sp = wp.lock()) return sp->GetY();
+  return Y{};
+}();
+
+Or implement a get_or function for weak_ptr, or a monadic interface.
+
+--
+
+Composability is a fundamental goal of declarative style
+
+Why write your own STL algorithms
+ - doesn't exist
+ - doesn't have the interface you want - (start, length) paradigm rather than (start, end)
+ - doesn't quite do what you want (set_symmetric_difference, reduce)
+
+Examples
+ - min_unused
+ - is_prefix_of
+ - join
+ - transform_if
+ - set_differences_copy
+ - push_back_unique
+
+Interface considerations
+ - David Sankel's lightning talk
+ - argument order (is_prefix_of)
+ - consistency with existing algorithms
+ - provide a general algo plus simplified interface wrapper
+ - constraining for types
+ - principle of useful return
+ - chaining
+
+Efficiency considerations
+ - efficiency is part of the interface
+ - overloads
+ - disabling overloads with =delete if they are not efficient
+ - strength reduction
+ - recursive to iterative
+
+Making random easier to use
+ - make_uniform_distribution
+ - [int] vs [float)
+
+C++17 stuff
+ - constexpr if
+ - structured bindings for return
+ - optional return
+
+min_unused example
+
+--
+
+Declarative style
+
+Say what something IS.
+Not what to DO.
+
+Expressions vs statements
+
+Declarative style support from C
+ - every expression is a statement
+ - chain assignments
+
+Declarative style support from C++
+ - RAII, constructors & destructors
+ - inline variables
+ - aggregate/brace/list initialization
+ - operator overloading
+ - template argument deduction for class templates
+ - auto & return type deduction?
+ - nodiscard attribute?
+ - fold expressions
+ - UDLs
+ - argument evaluation order (P0145R3)
+ - scoped enum value initialization (P0138R2)
+ - structured bindings
+ - views/spans?
+ - lambdas?
+ - range-for?
+
+We prefer declarations:
+ - constructor initializer lists
+ - declaration with = does not call copy constructor (but ES.64)
+
+Declarative style and const. cf. maths "let x = 1".
+Con.1 By default, make objects immutable.
+Con.4 Use const to define objects with values that do not change after construction.
+ => there exist plenty of objects that do not change => declarative style?
+Remove declaration/initialization split.
+ES.28 Use lambdas for complex initialization.
+
+The role of purity in declarative style.
+The role of static typing in declarative style.
+
+Declarative style in copy/move constructors (std::exchange)
+
+Style tradeoffs
+ - ease of use/correctness vs performance
+ - completeness vs performance
+
+Member functions vs free functions? UFCS?
+Chaining methods
+
+Declarative style in tests
+Declarative style in Clara
+
+
+* what is declarative style?
+
+"A programming paradigm ... that expresses the logic of a computation without
+describing its control flow." (Wikipedia)
+
+"Often it involves the separation of 'facts' from operations on the facts." (wiki.c2.com)
+ - commutativity (order of statements and expressions should not affect semantics)
+ - idempotence (replication of a statement should not affect semantics)
+
+ - referential transparency
+
+ - concerned with declaring things?
+ - WHAT rather than HOW
+ - declarative vs imperative
+
+"Declarative programming is an umbrella term that includes a number of
+better-known programming paradigms."
+
+Goes on to list (among others) hybrid languages like yacc.
+
+C++ is multiparadigm: but we benefit from mixing in declarative constructs.
+
+* expression vs statements
+ - expressions have a type
+ - expressions have a value
+ - expressions reify computations
+ - functions turn statements into expressions
+
+* operator overloading
+ - people don't like it because?
+   - it's easy to get wrong
+   - proliferation is "bad" because not natural/understood already
+ - but for things that do have existing meaning, it's good
+ - does it have an existing meaning?
+ - monoid? commutative?
+ - + vs *
+ - what should we use for string concat?
+
+* Costly API errors
+ - September 23, 1999: Mars Climate Orbiter fires its engine to push itself into Mars orbit
+ - Imperial (Lockheed Martin) vs metric (NASA) error: it drops about 100km too close to Mars
+ - It is likely now somewhere beyond Mars, happily orbiting the sun
+ - $125m mistake
+ - (not using types effectively enough)
+
+ - Therac-25 (1985-87): 3 deaths. Concurrency errors.
+ - Ariane 5 (June 4, 1996): wrong narrowing conversion (64-bit to 16-bit). A
+   decade of development (est $7B) and $500m cargo.
+
+ - ALGOL W, 1965: Tony Hoare invents NULL
+ - Later considers it a "billion dollar mistake"
+
+ - MS's billion dollar mistake: backslash as path separator
+ - Sometimes companies (and people) make worse choices just because they have to be different
+ - Don't let that happen to your code
+
+* expression templates
+ - reify computation and optimize it
+
+* declarative examples
+ - logging APIs
+ - future then (reify computations)
+ - schedule example
+ - C++17 order-of-eval fix (P0145)

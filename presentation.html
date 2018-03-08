@@ -1,0 +1,3746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Easy to Use, Hard to Misuse</title>
+<meta name="author" content="(Ben Deane)"/>
+<style type="text/css">
+.underline { text-decoration: underline; }
+</style>
+<link rel="stylesheet" href="../reveal.js/css/reveal.css"/>
+
+<link rel="stylesheet" href="../reveal.js/css/theme/blood.css" id="theme"/>
+
+<link rel="stylesheet" href="./presentation.css"/>
+
+<!-- If the query includes 'print-pdf', include the PDF print sheet -->
+<script>
+    if( window.location.search.match( /print-pdf/gi ) ) {
+        var link = document.createElement( 'link' );
+        link.rel = 'stylesheet';
+        link.type = 'text/css';
+        link.href = '../reveal.js/css/print/pdf.css';
+        document.getElementsByTagName( 'head' )[0].appendChild( link );
+    }
+</script>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+<section id="sec-title-slide"><div class='vertspace6'/><h2>Easy to Use, Hard to Misuse</h2><h3>Declarative Style in C++</h3></div><h3>Ben Deane / <a href="mailto:bdeane@blizzard.com">bdeane@blizzard.com</a> / <a href="http://twitter.com/ben_deane">@ben_deane</a></h3><h4>C++Now / Thursday May 10th, 2018</h4>
+</section>
+<script type="text/javascript" src="./presentation.js"></script>
+
+<section>
+<section id="slide-orge1a9333">
+<h2 id="orge1a9333">Declarative Style</h2>
+<div class='vertspace2'></div>
+<blockquote nil>
+<p>
+"I keep hearing this term and every time I hear it the definition seems very hand-wavy."
+</p>
+<div></div><div class='author'>
+<p>
+&#x2013; A C++Now submission reviewer
+</p>
+</div>
+</blockquote>
+
+<aside class="notes">
+<p>
+This quote from the reviewers who accepted my talk.
+</p>
+
+<p>
+This talk is going to be part philosophy, part history, and hopefully a good
+part pragmatism. I'm not going to give you a lot of "pure functional"
+rabbit-holing.
+</p>
+
+<p>
+I'm going to try to find a definition and guidelines that will fit with C++ as a
+large, multiparadigm language.
+</p>
+
+</aside>
+
+</section>
+</section>
+<section>
+<section id="slide-org8726139">
+<h2 id="org8726139">In This Talk</h2>
+<div class='vertspace2'></div>
+<ol>
+<li>Definitions</li>
+<li>Where we came from</li>
+<li>Where we are</li>
+<li>Where we could be headed</li>
+
+</ol>
+
+</section>
+</section>
+<section>
+<section id="slide-org813b275">
+<h2 id="org813b275">What Do We Mean?</h2>
+<div class="outline-text-2" id="text-org813b275">
+</div>
+</section>
+<section id="slide-org37a3eda">
+<h3 id="org37a3eda">Wikipedia</h3>
+<div class='vertspace2'></div>
+<blockquote nil>
+<p>
+"A programming paradigm &#x2026; that expresses the logic of a computation without
+describing its control flow."
+</p>
+</blockquote>
+
+<aside class="notes">
+<p>
+Hmm. Maybe? But control flow is sort of important to C++, I'm not sure we can
+ditch it entirely.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orgc4cc299">
+<h3 id="orgc4cc299">wiki.c2.com</h3>
+<div class='vertspace2'></div>
+<blockquote nil>
+<p>
+"Often it involves the separation of 'facts' from operations on the facts."
+</p>
+</blockquote>
+<blockquote nil>
+<p>
+"&#x2026; generalizes the pure functional model."
+</p>
+</blockquote>
+
+<ul>
+<li class="fragment appear">commutativity</li>
+<li class="fragment appear">idempotency</li>
+
+</ul>
+
+<aside class="notes">
+<p>
+Ward Cunningham's original wiki. Home to the "Informal History of Programming
+Ideas".
+</p>
+
+<p>
+We are not too concerned with pure functional in C++.
+</p>
+
+<p>
+Order of statements should not affect semantics. Replication of statements
+should not affect semantics.
+</p>
+
+<p>
+This seems to be talking more about say, Prolog, than C++.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orgc7f1b51">
+<h3 id="orgc7f1b51">Language Classifications?</h3>
+<div class='vertspace2'></div>
+<ul>
+<li class="fragment appear">imperative/procedural (FORTRAN, C)</li>
+<li class="fragment appear">object-oriented (Smalltalk, Java)</li>
+<li class="fragment appear">functional (ML, Haskell)</li>
+<li class="fragment appear">etc.</li>
+
+</ul>
+
+<aside class="notes">
+<p>
+Many general-purpose languages (certainly of the last 30-40 years) resist strict
+classification.
+</p>
+
+<p>
+It's a bit like trying to classify music: there is a lot of overlap and a lot of
+subgenres. People say "classical music" commonly meaning anything from Bach to
+John Williams.
+</p>
+
+<p>
+The Beatles were ostensibly a pop band. "She Loves You" is unmistakeably a pop
+song. On the other hand, they produced songs like "Within You Without You" and
+"Helter Skelter".
+</p>
+
+<p>
+On this list, even Haskell can be programmed "imperatively".
+</p>
+
+<p>
+We would say that C++ is multiparadigm of course. Procedural, OO, functional,
+generic at least.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org357dd31">
+<h3 id="org357dd31">Declarative Style Indicators</h3>
+<div class='vertspace2'></div>
+<ul>
+<li class="fragment appear">referential transparency</li>
+<li class="fragment appear">say WHAT in preference to HOW</li>
+<li class="fragment appear">minimize imperative style</li>
+<li class="fragment appear">expressions over statements</li>
+<li class="fragment appear">declaring things?</li>
+
+</ul>
+
+<aside class="notes">
+<p>
+Declarative style is not a hard-and-fast thing, especially not in C++.
+</p>
+
+<p>
+It's rather a way of tailoring the code.
+</p>
+
+<p>
+At the risk of being etymologically reductive, in part it's a preference for
+using declarations. Declarations are an indicator of this style. Why shouldn't
+we follow this thread?
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org7948819">
+<h3 id="org7948819">Declarative Style Motivation</h3>
+<div class='vertspace2'></div>
+<blockquote nil>
+<p>
+"Declarative programming is everyone's dream, because it looks like it's easier
+to prove correct."
+</p>
+<div></div><div class='author'>
+<p>
+&#x2013; Another C++Now submission reviewer
+</p>
+</div>
+</blockquote>
+
+<aside class="notes">
+<p>
+This quote also from the reviewers who accepted my talk.
+</p>
+
+<p>
+I'm not sure there's going to be any proving in this talk, but for me this
+speaks to the fact that declarative style tends to focus on expressions and
+minimize the use of statements.
+</p>
+
+<p>
+I would say that it is easier to convince ourselves that it is correct.
+</p>
+
+</aside>
+
+</section>
+</section>
+<section>
+<section id="slide-org1c3d5d9">
+<h2 id="org1c3d5d9">Expressions vs Statements</h2>
+<div class="outline-text-2" id="text-org1c3d5d9">
+</div>
+</section>
+<section id="slide-org8e15a42">
+<h3 id="org8e15a42">Expressions</h3>
+<div class='vertspace2'></div>
+<p>
+"An expression is a sequence of operators and operands that specifies a
+computation. An expression can result in a value and can cause side effects." [expr.pre] &sect; 1
+</p>
+<div class='vertspace2'></div>
+<p>
+Properties of expressions:
+</p>
+<ul>
+<li class="fragment appear">value category</li>
+<li class="fragment appear">type</li>
+
+</ul>
+
+<aside class="notes">
+<p>
+The standard has a lot to say about expressions in general before even going
+into detail about kinds of expressions and how to make them.
+</p>
+
+<p>
+There is the familiar value-category tree (lvalue, xvalue, prvalue, etc), which
+has "expression" at its root.
+</p>
+
+<p>
+Expressions have intrinsic properties that can be reasoned about.
+</p>
+
+<p>
+There is also "context dependence" which is to do with unevaluated contexts and
+evaluation for side effects only. A bit of standardese, really.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orgb3ca8ed">
+<h3 id="orgb3ca8ed">Expressions Compose On Multiple Axes</h3>
+<div class='vertspace2'></div>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #a020f0;">auto</span> <span style="color: #a0522d;">expr</span> = e1 @ e2 @ e3;
+</pre>
+</div>
+<div class='vertspace2'></div>
+<p>
+Consider this snippet.
+</p>
+
+<aside class="notes">
+<p>
+Here, @ is any operator.
+</p>
+
+<p>
+There are at least two obvious kinds of composition going on here.
+</p>
+
+<p>
+a, b, and c have values. expr has a value.
+</p>
+
+<p>
+a, b, and c have types. expr has a type.
+</p>
+
+<p>
+Expressions compose on the value axis, and also on the type axis.
+Value-composition happens at runtime, and type composition happens at
+compile-time. So it can be checked.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orgb54eb0d">
+<h3 id="orgb54eb0d">Statements</h3>
+<div class='vertspace2'></div>
+<p>
+"Except as indicated, statements are executed in sequence." [stmt.stmt] &sect; 1
+</p>
+<div class='vertspace2'></div>
+<p>
+Properties of statements:
+</p>
+<ul>
+<li class="fragment appear">er&#x2026;</li>
+
+</ul>
+
+<aside class="notes">
+<p>
+The standard doesn't have a lot to say about statements in general. They are
+defined extrinsically.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org1b23e06">
+<h3 id="org1b23e06">Statements "Compose" Only By Sequencing</h3>
+<div class='vertspace2'></div>
+<div class="org-src-container">
+
+<pre  class="src src-c++">s1;
+s2;
+s3;
+</pre>
+</div>
+<div class='vertspace2'></div>
+<p class="fragment (appear)">
+Many of our guidelines, best practices, idioms, and much of our tooling, static
+and dynamic analysis, is in service of checking the implicit constraints around
+statement "composition".
+</p>
+
+<aside class="notes">
+<p>
+Statements "compose" only by sequencing.
+</p>
+
+<p>
+There is no direct way to constrain this.
+No type checking.
+Some value checking is done with asserts.
+We have (varyingly implicit) constraints with pre- and post-conditions.
+We have the implicit constraints imposed by variable lifetime extents.
+We have constraints imposed by variable scopes -&gt; this is checkable, so we do it a lot!
+</p>
+
+<p>
+Dijkstra: "Our intellectual powers are rather geared to master static relations
+and our powers to visualize processes evolving in time are relatively poorly
+developed."
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orgd6ea184">
+<h3 id="orgd6ea184">Imperative Safety Gear</h3>
+<div class='vertspace2'></div>
+<p>
+Many of our guidelines, best practices, idioms, and much of our tooling, static
+and dynamic analysis, is in service of checking the implicit constraints around
+statement "composition".
+</p>
+
+<aside class="notes">
+<p>
+We make conventions. We make guidelines.
+</p>
+
+<p>
+We make tools. We like to run multiple static analysers to get different
+benefits from each.
+</p>
+
+<p>
+We make more tools. We make libraries in support of those tools. We add things
+to the language to help us manage this problem. We have a contracts proposal!
+</p>
+
+<p>
+This is all well and good, but here's an alternative: use fewer statements and
+more expressions.
+</p>
+
+</aside>
+
+</section>
+</section>
+<section>
+<section id="slide-org89c976a">
+<h2 id="org89c976a">Let's Deconstruct a Bit&#x2026;</h2>
+<div class="outline-text-2" id="text-org89c976a">
+</div>
+</section>
+<section id="slide-org00bfabd">
+<h3 id="org00bfabd">World's Last Bug</h3>
+<div class='vertspace2'></div>
+<div class="org-src-container">
+
+<pre  class="src src-c"><span style="color: #a020f0;">while</span> <span style="color: #707183;">(</span><span style="color: #008b8b;">true</span><span style="color: #707183;">)</span>
+<span style="color: #707183;">{</span>
+  status = GetRadarInfo<span style="color: #7388d6;">()</span>;
+  <span style="color: #a020f0;">if</span> <span style="color: #7388d6;">(</span>status = <span style="color: #008b8b;">1</span><span style="color: #7388d6;">)</span>
+    LaunchMissiles<span style="color: #7388d6;">()</span>;
+<span style="color: #707183;">}</span>
+</pre>
+</div>
+<p>
+Ancient history you say?
+</p>
+
+<aside class="notes">
+<p>
+This is an assignment acting as an expression.
+</p>
+
+<p>
+Two odd things here. Let's digress a bit and consider how history brought us to
+the current situation.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org218c757">
+<h3 id="org218c757">Odd Thing #1: Assignments are Expressions</h3>
+<div class='vertspace2'></div>
+<p>
+Assignment is a statement.
+</p>
+
+<p>
+Expressions are statements?
+</p>
+
+<p>
+Assignment as an expression is a historical choice.
+</p>
+
+<aside class="notes">
+<p>
+When I was at university, I learned Modula-3. Modula-3 had a particular compile
+error that became well known to me and my friends.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orgb7ca776">
+<h3 id="orgb7ca776">Odd Thing #1: Assignments are Expressions</h3>
+<div class='vertspace2'></div>
+<blockquote nil>
+<p>
+"Expression is not a statement."
+</p>
+<div></div><div class='author'>
+<p>
+&#x2013; Modula-3 compiler, 1993
+</p>
+</div>
+</blockquote>
+
+<aside class="notes">
+<p>
+Some of us were used to programming C, where expressions are statements.
+</p>
+
+<p>
+But this didn't start with C: so-called expression-oriented languages were
+already around for a while, notably ALGOL-68 (1968) and LISP (1958).
+</p>
+
+<p>
+Hence&#x2026;
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org20343ec">
+<h3 id="org20343ec">LISP is Expression-Oriented</h3>
+<div class='vertspace2'></div>
+<blockquote nil>
+<p>
+"LISP programmers know the value of everything, but the cost of nothing."
+</p>
+<div></div><div class='author'>
+<p>
+&#x2013; Alan Perlis (after Oscar Wilde)
+</p>
+</div>
+</blockquote>
+
+</section>
+<section id="slide-orgadfcac0">
+<h3 id="orgadfcac0">Odd Thing #1: Assignments are Expressions</h3>
+<div class='vertspace2'></div>
+<div class="org-src-container">
+
+<pre  class="src src-c"><span style="color: #006400;">/* </span><span style="color: #006400;">The following function will print a non-negative number, n, to</span>
+<span style="color: #006400;">   the base b, where 2&lt;=b&lt;=10.  This routine uses the fact that</span>
+<span style="color: #006400;">   in the ASCII character set, the digits 0 to 9 have sequential</span>
+<span style="color: #006400;">   code values.  </span><span style="color: #006400;">*/</span>
+<span style="color: #0000ff;">printn</span><span style="color: #707183;">(</span>n, b<span style="color: #707183;">)</span> <span style="color: #707183;">{</span>
+    <span style="color: #228b22;">extrn</span> <span style="color: #a0522d;">putchar</span>;
+    <span style="color: #a020f0;">auto</span> <span style="color: #228b22;">a</span>;
+
+    <span style="color: #a020f0;">if</span> <span style="color: #7388d6;">(</span>a = n / b<span style="color: #7388d6;">)</span>    <span style="color: #006400;">/* </span><span style="color: #006400;">assignment, not test for equality </span><span style="color: #006400;">*/</span>
+        printn<span style="color: #7388d6;">(</span>a, b<span style="color: #7388d6;">)</span>; <span style="color: #006400;">/* </span><span style="color: #006400;">recursive </span><span style="color: #006400;">*/</span>
+    putchar<span style="color: #7388d6;">(</span>n % b + <span style="color: #b22222;">'0'</span><span style="color: #7388d6;">)</span>;
+<span style="color: #707183;">}</span>
+</pre>
+</div>
+
+<aside class="notes">
+<p>
+I had to tell my syntax highlighter that this was C. Does anyone know what
+language this is?
+</p>
+
+<p>
+From the Users' Reference to B by Ken Thompson. (B: 1969)
+</p>
+
+<p>
+B was descended from Martin Richards' BCPL (1967), which had an assignment
+command, not an assignment expression.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org71fb014">
+<h3 id="org71fb014">Odd Thing #1: Assignments are Expressions</h3>
+<div class='vertspace2'></div>
+<p>
+We've learned to deal with this. But we don't really like it.
+</p>
+<ul>
+<li class="fragment appear">yoda conditions</li>
+<li class="fragment appear">compiler warnings</li>
+<li class="fragment appear">P0963: discouraged</li>
+
+</ul>
+
+<aside class="notes">
+<p>
+P0963: structured binding declaration as a condition
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org415e335">
+<h3 id="org415e335">Odd Thing #2: = Means Assignment</h3>
+<div class='vertspace2'></div>
+<div class="org-src-container">
+
+<pre  class="src src-c"><span style="color: #006400;">/* </span><span style="color: #006400;">The following function will print a non-negative number, n, to</span>
+<span style="color: #006400;">   the base b, where 2&lt;=b&lt;=10.  This routine uses the fact that</span>
+<span style="color: #006400;">   in the ASCII character set, the digits 0 to 9 have sequential</span>
+<span style="color: #006400;">   code values.  </span><span style="color: #006400;">*/</span>
+<span style="color: #0000ff;">printn</span><span style="color: #707183;">(</span>n, b<span style="color: #707183;">)</span> <span style="color: #707183;">{</span>
+    <span style="color: #228b22;">extrn</span> <span style="color: #a0522d;">putchar</span>;
+    <span style="color: #a020f0;">auto</span> <span style="color: #228b22;">a</span>;
+
+    <span style="color: #a020f0;">if</span> <span style="color: #7388d6;">(</span>a = n / b<span style="color: #7388d6;">)</span>    <span style="color: #006400;">/* </span><span style="color: #006400;">assignment, not test for equality </span><span style="color: #006400;">*/</span>
+        printn<span style="color: #7388d6;">(</span>a, b<span style="color: #7388d6;">)</span>; <span style="color: #006400;">/* </span><span style="color: #006400;">recursive </span><span style="color: #006400;">*/</span>
+    putchar<span style="color: #7388d6;">(</span>n % b + <span style="color: #b22222;">'0'</span><span style="color: #7388d6;">)</span>;
+<span style="color: #707183;">}</span>
+</pre>
+</div>
+
+</section>
+<section id="slide-org9b61c36">
+<h3 id="org9b61c36">Odd Thing #2: = Means Assignment</h3>
+<div class='vertspace2'></div>
+<blockquote nil>
+<p>
+"A notorious example for a bad idea was the choice of the equal sign to denote
+assignment."
+</p>
+<div></div><div class='author'>
+<p>
+&#x2013; Niklaus Wirth
+</p>
+</div>
+</blockquote>
+
+<aside class="notes">
+<p>
+"Because it overthrows a century old tradition to let “=” denote a comparison
+for equality, a predicate which is either true or false."
+</p>
+
+<p>
+"the operands are on unequal footing &#x2026; x = y does not mean the same thing as y = x."
+</p>
+
+<p>
+From this I conclude that Niklaus Wirth is not really a fan of operator
+overloading. We'll come back to this idea later.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org57502f3">
+<h3 id="org57502f3">Odd Thing #2: = Means Assignment</h3>
+<div class='vertspace2'></div>
+<ul>
+<li class="fragment appear">Superplan (1951) introduced <code>=</code> for assignment</li>
+<li class="fragment appear">FORTRAN (1957) used <code>=</code> (because <code>.GT.</code> <code>.LT.</code> <code>.EQ.</code> etc)</li>
+<li class="fragment appear">ALGOL-58 introduced <code>:=</code> (assignment) distinct from <code>=</code> (equality)
+<ul>
+<li>Subsequently many languages went this way</li>
+
+</ul></li>
+<li class="fragment appear">BCPL (1967) used <code>:=</code></li>
+<li class="fragment appear">B (1969) simplified a lot of BCPL syntax, went with <code>=</code>
+<ul>
+<li>Followed by C (1972) and many other languages</li>
+
+</ul></li>
+
+</ul>
+
+<aside class="notes">
+<p>
+The 50s and 60s was an incredible time for programming language innovation.
+Superplan introduced the for loop!
+</p>
+
+<p>
+FORTRAN had to use a very restricted character set. There were no greater than
+or less than symbols, hence the idiosyncratic relational operators and the
+freeing up of equals for assignment.
+</p>
+
+<p>
+B introduced the arithmetic assignment operators: += etc.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org6bbd8bf">
+<h3 id="org6bbd8bf">Odd Thing #2: = Means Assignment</h3>
+<div class='vertspace2'></div>
+<blockquote nil>
+<p>
+"Since assignment is about twice as frequent as equality testing
+in typical programs, it’s appropriate that the operator be half as long."
+</p>
+<div></div><div class='author'>
+<p>
+&#x2013; Ken Thompson
+</p>
+</div>
+</blockquote>
+
+<aside class="notes">
+<p>
+Ken Thompson wanted to fit BCPL on the PDP-7. BCPL's compiler at the time was
+16k. PDP-7 had 4k of memory. So Ken cut down the number of characters in source
+wherever he could.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org0d666ab">
+<h3 id="org0d666ab">Declaration vs (Re-)Assignment</h3>
+<div class='vertspace2'></div>
+<p>
+In moving from BCPL to B, the distinction between
+</p>
+
+<p>
+declaration and reassignment was blurred.
+</p>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #228b22;">int</span> <span style="color: #a0522d;">a</span> = <span style="color: #008b8b;">42</span>; <span style="color: #006400;">// </span><span style="color: #006400;">declaration/initialization</span>
+
+a = <span style="color: #008b8b;">1729</span>; <span style="color: #006400;">// </span><span style="color: #006400;">reassignment</span>
+</pre>
+</div>
+
+<blockquote nil>
+<p>
+"It cannot be overemphasized that <b>assignment and initialization are different
+operations</b>."
+</p>
+<div></div><div class='author'>
+<p>
+&#x2013; Bjarne Stroustrup, <i>The C++ Programming Language</i>
+</p>
+</div>
+</blockquote>
+
+<aside class="notes">
+<p>
+Early languages (50s and 60s) often distinguished declaration-assignment from
+reassignment. Pascal-type languages still do.
+</p>
+
+<p>
+Consider <code>int</code> here replaced with <code>let</code>, and you have a mathematical declaration
+or variable introduction. A mathematical assignment is nonsensical.
+</p>
+
+<p>
+This distinction was clear in BCPL, which uses = for declaration and := for
+reassignment. But the cutting-down-for-memory of B introduced ambiguity.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org64c4a48">
+<h3 id="org64c4a48">&lt;End of Historical Diversion&gt;</h3>
+<div class='vertspace2'></div>
+<ul>
+<li class="fragment appear">Declaring things is &#x2013; has always been &#x2013; fine.</li>
+<li class="fragment appear">Declaration and assignment are different things that look the same.</li>
+<li class="fragment appear">Expression-statements are best avoided.
+<ul>
+<li>Chained assignments are a syntactic laziness.</li>
+
+</ul></li>
+
+</ul>
+
+<aside class="notes">
+<p>
+What does a look at history tell us about programming style, especially
+declarative style?
+</p>
+
+<p>
+Assignment as an expression is a lazy convenience that doesn't do us any
+favours. Expression statements have always been a trap for the unwary.
+</p>
+
+<p>
+That's why we have warnings for things like this. And that's why we have things
+like if-initializers and nodiscard attributes.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orgcbe0a20">
+<h3 id="orgcbe0a20">Expressions vs Statements: Recap</h3>
+<div class='vertspace2'></div>
+<p>
+Expressions have values.
+</p>
+
+<p>
+Expressions have types and value categories.
+</p>
+<div class='vertspace2'></div>
+<p>
+Statements mutate state.
+</p>
+
+<p>
+Statements have implicit constraints between them.
+</p>
+<div class='vertspace2'></div>
+<p>
+Expressions are easier to reason about than statements.
+</p>
+
+<aside class="notes">
+<p>
+To me this is the heart of declarative style: a preference for using expressions
+over statements.
+</p>
+
+<p>
+Expressions are easier to reason about: compilers have been reasoning about them
+for 50 years and we are still having problems convincing compilers to reason
+effectively about statements.
+</p>
+
+</aside>
+
+</section>
+</section>
+<section>
+<section id="slide-org06cf4c0">
+<h2 id="org06cf4c0">A Quick Declarative Study</h2>
+<div class="outline-text-2" id="text-org06cf4c0">
+</div>
+</section>
+<section id="slide-orge5fd3d3">
+<h3 id="orge5fd3d3">Example</h3>
+<div class='vertspace2'></div>
+<p>
+Given:
+</p>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #228b22;">weak_ptr</span><span style="color: #707183;">&lt;</span>Foo<span style="color: #707183;">&gt;</span> <span style="color: #a0522d;">wp</span>;
+</pre>
+</div>
+<p>
+How to write:
+</p>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #228b22;">Bar</span> <span style="color: #a0522d;">b</span>;
+<span style="color: #707183;">{</span>
+  <span style="color: #a020f0;">auto</span> <span style="color: #a0522d;">sp</span> = wp.lock<span style="color: #7388d6;">()</span>;
+  <span style="color: #a020f0;">if</span> <span style="color: #7388d6;">(</span>sp<span style="color: #7388d6;">)</span> b = sp-&gt;bar<span style="color: #7388d6;">()</span>;
+<span style="color: #707183;">}</span>
+</pre>
+</div>
+<p>
+In a (more) declarative way.
+</p>
+
+<aside class="notes">
+<p>
+Here is an imperative piece of code. What's wrong with it?
+</p>
+
+<ul>
+<li>declaration/initialization split (b could well be const after init)</li>
+<li>mutable state</li>
+<li>scope control (note convention)</li>
+
+</ul>
+
+<p>
+This code would likely pass code review. It's the best we can do with imperative
+style. It's ticking several guideline boxes. But it's still unsatisfying.
+</p>
+
+<p>
+I'm using shared<sub>ptr</sub> here as a standin for some generic access that requires
+this kind of pattern: the pattern is not just for shared<sub>ptr</sub>.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org2a02568">
+<h3 id="org2a02568">C++17 if-initializer?</h3>
+<div class='vertspace2'></div>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #228b22;">Bar</span> <span style="color: #a0522d;">b</span>;
+<span style="color: #a020f0;">if</span> <span style="color: #707183;">(</span><span style="color: #a020f0;">auto</span> <span style="color: #a0522d;">sp</span> = wp.lock<span style="color: #7388d6;">()</span>; sp<span style="color: #707183;">)</span>
+  b = sp-&gt;bar<span style="color: #707183;">()</span>;
+</pre>
+</div>
+<p>
+This still has the declaration/initialization split. Still has mutable state.
+</p>
+
+<aside class="notes">
+<p>
+Note: this is sort of a workaround for the assignment being an expression.
+</p>
+
+<p>
+I think it likely that this will become a style that replaces the simple
+assignment-as-an-expression.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orgdceb99e">
+<h3 id="orgdceb99e">Ternary operator?</h3>
+<div class='vertspace2'></div>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #228b22;">Bar</span> <span style="color: #a0522d;">b</span> = wp.lock<span style="color: #707183;">()</span> ? wp.lock<span style="color: #707183;">()</span>-&gt;bar<span style="color: #707183;">()</span> : Bar<span style="color: #707183;">{}</span>;
+</pre>
+</div>
+<p>
+Hm&#x2026;
+</p>
+
+<aside class="notes">
+<p>
+Temporary lives until semicolon? But double lock.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org442de14">
+<h3 id="org442de14">C++?? ternary-operator-initializer?</h3>
+<div class='vertspace2'></div>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #006400;">// </span><span style="color: #006400;">this isn't real syntax...</span>
+<span style="color: #228b22;">Bar</span> <span style="color: #a0522d;">b</span> = <span style="color: #707183;">[</span><span style="color: #a020f0;">auto</span> sp = wp.lock<span style="color: #7388d6;">()</span>; sp<span style="color: #707183;">]</span> ? sp-&gt;bar<span style="color: #707183;">()</span> : Bar<span style="color: #707183;">{}</span>;
+</pre>
+</div>
+<p>
+Might be nice&#x2026; but not today.
+</p>
+
+<aside class="notes">
+<p>
+Expressions and statements aren't equivalent, even when they "are".
+</p>
+
+<p>
+Unlike <code>if</code>, syntax doesn't allow us to put a declaration in the condition.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org6a2402a">
+<h3 id="org6a2402a">GCC Extension?</h3>
+<div class='vertspace2'></div>
+<div class="org-src-container">
+
+<pre  class="src src-c"><span style="color: #228b22;">Bar</span> <span style="color: #a0522d;">b</span> =
+<span style="color: #707183;">(</span><span style="color: #7388d6;">{</span>
+  <span style="color: #a020f0;">auto</span> <span style="color: #228b22;">sp</span> = wp.lock<span style="color: #909183;">()</span>;
+  sp ? sp-&gt;bar<span style="color: #909183;">()</span> : Bar<span style="color: #909183;">{}</span>;
+<span style="color: #7388d6;">}</span><span style="color: #707183;">)</span>;
+</pre>
+</div>
+<p>
+Not ISO C++.
+</p>
+
+<aside class="notes">
+<p>
+GCC has an extension called an expression statement. Hm&#x2026;
+</p>
+
+<p>
+This is similar to how a compound statement might be handled in a functional
+language, where the value of the statement is the value of the last statement in
+the body.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orgc4b1649">
+<h3 id="orgc4b1649">I+LE?</h3>
+<div class='vertspace2'></div>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #228b22;">Bar</span> <span style="color: #a0522d;">b</span> = <span style="color: #707183;">[</span>&amp;<span style="color: #707183;">]</span> <span style="color: #707183;">()</span> <span style="color: #707183;">{</span>
+  <span style="color: #a020f0;">if</span> <span style="color: #7388d6;">(</span><span style="color: #a020f0;">auto</span> <span style="color: #a0522d;">sp</span> = wp.lock<span style="color: #909183;">()</span>; sp<span style="color: #7388d6;">)</span> <span style="color: #a020f0;">return</span> sp-&gt;bar<span style="color: #7388d6;">()</span>;
+  <span style="color: #a020f0;">return</span> Bar<span style="color: #7388d6;">{}</span>;
+<span style="color: #707183;">}()</span>;
+</pre>
+</div>
+<p>
+Immediately-invoked, inline, initializing, &#x2026;
+</p>
+
+<aside class="notes">
+<p>
+This might be OK? Avoids declaration/initialization split anyway. Depends on
+your codebase style.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org496f2e4">
+<h3 id="org496f2e4">Optional-like?</h3>
+<div class='vertspace2'></div>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #228b22;">Bar</span> <span style="color: #a0522d;">b</span> = get_bar_or<span style="color: #707183;">(</span>wp.lock<span style="color: #7388d6;">()</span>, Bar<span style="color: #7388d6;">{}</span><span style="color: #707183;">)</span>;
+</pre>
+</div>
+<p>
+Not really generic enough.
+</p>
+
+</section>
+<section id="slide-orgf6dcf98">
+<h3 id="orgf6dcf98">Functorial/Monadic Interface?</h3>
+<div class='vertspace2'></div>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #228b22;">shared_ptr</span><span style="color: #707183;">&lt;</span>Bar<span style="color: #707183;">&gt;</span> <span style="color: #a0522d;">b</span> = fmap<span style="color: #707183;">(</span>wp.lock<span style="color: #7388d6;">()</span>,
+                         <span style="color: #7388d6;">[]</span> <span style="color: #7388d6;">(</span><span style="color: #a020f0;">auto</span> <span style="color: #a0522d;">foo</span><span style="color: #7388d6;">)</span> <span style="color: #7388d6;">{</span> <span style="color: #a020f0;">return</span> foo.bar<span style="color: #909183;">()</span>; <span style="color: #7388d6;">}</span><span style="color: #707183;">)</span>;
+</pre>
+</div>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #a020f0;">template</span> <span style="color: #707183;">&lt;</span><span style="color: #a020f0;">typename</span> <span style="color: #228b22;">T</span>, <span style="color: #a020f0;">typename</span> <span style="color: #228b22;">F</span><span style="color: #707183;">&gt;</span>
+<span style="color: #707183;">[</span><span style="color: #7388d6;">[</span><span style="color: #008b8b;">nodiscard</span><span style="color: #7388d6;">]</span><span style="color: #707183;">]</span> <span style="color: #a020f0;">auto</span> fmap<span style="color: #707183;">(</span><span style="color: #a020f0;">const</span> <span style="color: #228b22;">shared_ptr</span><span style="color: #7388d6;">&lt;</span><span style="color: #228b22;">T</span><span style="color: #7388d6;">&gt;</span>&amp; <span style="color: #a0522d;">p</span>, <span style="color: #228b22;">F</span> <span style="color: #a0522d;">f</span><span style="color: #707183;">)</span>
+    -&gt; <span style="color: #228b22;">shared_ptr</span><span style="color: #707183;">&lt;</span><span style="color: #228b22;">invoke_result_t</span><span style="color: #7388d6;">&lt;</span><span style="color: #228b22;">F</span>, <span style="color: #228b22;">T</span><span style="color: #7388d6;">&gt;</span><span style="color: #707183;">&gt;</span>
+<span style="color: #707183;">{</span>
+  <span style="color: #0000ff;">...</span>
+<span style="color: #707183;">}</span>
+</pre>
+</div>
+
+<aside class="notes">
+<p>
+This might be OK? Again depends on your codebase style.
+</p>
+
+<p>
+Note the nodiscard attribute: another piece of imperative safety gear that helps
+us avoid the pitfalls of statements.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orgf055551">
+<h3 id="orgf055551">Study Conclusions</h3>
+<div class='vertspace2'></div>
+<p>
+"Total" declarative style is not always achievable in C++.
+</p>
+
+<p>
+A <i>more</i> declarative style is a reasonable goal.
+</p>
+
+<p>
+Some features of C++ help us get there.
+</p>
+
+<p>
+Different domains lean towards different approaches.
+</p>
+
+<aside class="notes">
+<p>
+IILEs help, nodiscard attribute helps
+</p>
+
+<p>
+Different domains: we probably wouldn't want to use a monadic approach for
+shared<sub>ptr</sub>. But we might well want to for futures. For errors, the answer would
+probably depend on our codebase's existing practice.
+</p>
+
+<p>
+A key idea is to minimize statements and maximize the use of expressions. This
+maximizes the compiler's help.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org0245c65">
+<h3 id="org0245c65">Easy/Hard</h3>
+<div class='vertspace2'></div>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+<tr>
+<th class="org-left">Easy to Use</td>
+<th class="org-left">Hard to Misuse</td>
+</tr>
+<tr>
+<td class="org-left"><div class="fragment" data-fragment-index="1">composition</div></td>
+<td class="org-left"><div class="fragment" data-fragment-index="2">typed expressions</div></td>
+</tr>
+<tr>
+<td class="org-left"><div class="fragment" data-fragment-index="3">few conditions</div></td>
+<td class="org-left"><div class="fragment" data-fragment-index="4">operators & functions</div></td>
+</tr>
+<tr>
+<td class="org-left"><div class="fragment" data-fragment-index="5">total functions</div></td>
+<td class="org-left"><div class="fragment" data-fragment-index="6">declarations</div></td>
+</tr>
+</tbody>
+</table>
+
+<aside class="notes">
+<p>
+Composition and declarative style go hand in hand.
+</p>
+
+<p>
+Conditions get eliminated, or get pushed up or down the call stack. Pushing down
+the call stack encapsulates conditions when there is some intrinsic property of
+the data structure that is a condition (like optionality). Pushing up the call
+stack and replacing with a behaviour that is passed in gives control to the
+caller while keeping the call site declarative.
+</p>
+
+<p>
+Few conditions tends to imply total functions.
+</p>
+
+<p>
+Declarations: const, AAA.
+</p>
+
+</aside>
+
+</section>
+</section>
+<section>
+<section id="slide-org8084ab1">
+<h2 id="org8084ab1">Existing Declarative Practice</h2>
+<div class="outline-text-2" id="text-org8084ab1">
+</div>
+</section>
+<section id="slide-org3c20049">
+<h3 id="org3c20049">Core Guidelines</h3>
+<div class='vertspace2'></div>
+<p>
+<i><code>Con.1</code></i> By default, make objects immutable.
+</p>
+
+<p>
+<i><code>Con.4</code></i> Use const to define objects with values that do not change after
+construction.
+</p>
+
+<p>
+<i><code>ES.21</code></i> Don't introduce a variable (or constant) before you need to use it.
+</p>
+
+<p>
+<i><code>ES.22</code></i> Don't declare a variable until you have a value to initialize it with.
+</p>
+
+<p>
+<i><code>ES.28</code></i> Use lambdas for complex initialization.
+</p>
+
+<aside class="notes">
+<p>
+Corollary to <i>Con.4</i>: we probably have lots of objects that can be const.
+</p>
+
+<p>
+Just watch a few episodes of C++Weekly&#x2026;
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orge426dcd">
+<h3 id="orge426dcd">Functions in General</h3>
+<div class='vertspace2'></div>
+<p>
+Which is better?
+</p>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #006400;">// </span><span style="color: #006400;">do A</span>
+<span style="color: #0000ff;">...</span>
+<span style="color: #006400;">// </span><span style="color: #006400;">do B</span>
+<span style="color: #0000ff;">...</span>
+<span style="color: #006400;">// </span><span style="color: #006400;">do C</span>
+<span style="color: #0000ff;">...</span>
+</pre>
+</div>
+<p>
+or
+</p>
+<div class="org-src-container">
+
+<pre  class="src src-c++">do_A<span style="color: #707183;">()</span>;
+do_B<span style="color: #707183;">()</span>;
+do_C<span style="color: #707183;">()</span>;
+</pre>
+</div>
+<p>
+?
+</p>
+
+<aside class="notes">
+<p>
+Function calls are expressions. Functions turn statements into expressions. To
+me there is one specific structural reason why function calls are better.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org414fb8d">
+<h3 id="org414fb8d">The "Normal" Reasons</h3>
+<div class='vertspace2'></div>
+<ul>
+<li>shorter is more expressive, understandable</li>
+<li>encapsulation of variable scopes, lifetimes</li>
+<li>give things names</li>
+
+</ul>
+
+</section>
+<section id="slide-orga447e6a">
+<h3 id="orga447e6a">My Reason: <code>return</code></h3>
+<div class='vertspace2'></div>
+<ul>
+<li class="fragment appear"><code>return</code> is the <code>goto</code> that we love</li>
+<li class="fragment appear">it cuts through all the complexity</li>
+<li class="fragment appear">I know that nothing happens afterwards</li>
+<li class="fragment appear">way better than <code>break</code> (super-<code>break</code>!)</li>
+<li class="fragment appear">and if that wasn't enough, RVO</li>
+
+</ul>
+
+<aside class="notes">
+<p>
+I am not a fan of "one exit path per function". I don't think this is a
+particularly controversial point of view. In C++ it's an antipattern. When you
+have RAII, you don't need this!
+</p>
+
+<p>
+Early-outs make for shallow, simple conditions. "Guard Clauses" is the name for
+this refactoring, in fact.
+</p>
+
+<p>
+<code>return</code> can very simply cut out of find-style algorithms.
+</p>
+
+<p>
+The notion of single-exit was introduced with Structured Programming as a guard
+against alternate returns, which were not returns <i>from</i> multiple places but
+returns <i>to</i> multiple places. e.g. in FORTRAN when a function had an error it
+would do an alternate return to a place where the error was handled.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org29d453a">
+<h3 id="org29d453a">&lt;algorithm&gt;</h3>
+<div class='vertspace2'></div>
+<p>
+No Raw Loops
+</p>
+
+<aside class="notes">
+<p>
+Algorithms are essentially declarative: they are functions. They are expressive.
+They have names. They declare what's going on.
+</p>
+
+<p>
+"No raw loops" as a goal is a subset of "strive for declarative code".
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org5eb1e81">
+<h3 id="org5eb1e81"><code>#include "my_algorithms.h"</code></h3>
+<div class='vertspace2'></div>
+<ul>
+<li><code>is_prefix_of</code></li>
+<li><code>join</code></li>
+<li><code>transform_if</code></li>
+<li><code>set_differences</code> (aka before and after)</li>
+<li><code>push_back_unique</code></li>
+
+</ul>
+
+<aside class="notes">
+<p>
+Here is a selection of algorithms in my toolkit.
+</p>
+
+<p>
+None of these algorithms is groundbreaking. Some of them are little more than
+rebrandings of one-liners. None of them is more than a handful of lines.
+</p>
+
+<p>
+We'll come back to the idea of structuring interfaces to support declarative
+style. But for now consider <code>is_prefix_of</code>. What order should the arguments be
+in?
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orge6edef0">
+<h3 id="orge6edef0">Argument ordering</h3>
+<div class='vertspace2'></div>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #228b22;">string_view</span> <span style="color: #a0522d;">prefix</span>;
+<span style="color: #228b22;">string_view</span> <span style="color: #a0522d;">s</span>;
+
+<span style="color: #006400;">// </span><span style="color: #006400;">member function: reads nicely</span>
+<span style="color: #228b22;">bool</span> <span style="color: #a0522d;">b</span> = s.starts_with<span style="color: #707183;">(</span>prefix<span style="color: #707183;">)</span>;
+
+<span style="color: #006400;">// </span><span style="color: #006400;">when making a free function, make it read as though it were infix</span>
+<span style="color: #006400;">// </span><span style="color: #006400;">bool b = prefix is_prefix_of s;</span>
+<span style="color: #228b22;">bool</span> <span style="color: #a0522d;">b</span> = is_prefix_of<span style="color: #707183;">(</span>prefix, s<span style="color: #707183;">)</span>;
+</pre>
+</div>
+
+<aside class="notes">
+<p>
+<code>string_view::starts_with</code> is a fine function. But it is a member function, and
+often we prefer free functions. So when we make a free function, a good rule of
+thumb is to order the arguments as if it were infix.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org47ff813">
+<h3 id="org47ff813">Declarative Style and Statements</h3>
+<div class='vertspace2'></div>
+<ul>
+<li>expression statement</li>
+<li>compound statement</li>
+<li>selection statement (<code>if</code>, <code>switch</code>)</li>
+<li>iteration statement (<code>for</code>, <code>while</code>, <code>do</code>)</li>
+<li>jump statement (<code>break</code>, <code>continue</code>, <code>return</code>, <code>goto</code>)</li>
+<li>declaration statement</li>
+
+</ul>
+
+<aside class="notes">
+<p>
+Declarative style is essentially a preference for avoiding statements.
+</p>
+
+<p>
+Expression statement is for side-effects only: mutable state. Oddly this
+includes assignment expressions.
+</p>
+<ul>
+<li>-wunused-value ("statement has no effect")</li>
+<li>nodiscard attribute in C++17</li>
+<li>yoda conditions</li>
+
+</ul>
+
+<p>
+No raw loops: prefer function calls (expressions) over iteration statements. And
+if you don't have loops, you don't have <code>break</code> or <code>continue</code>.
+</p>
+
+<p>
+Use I+LEs and functions in general: leverage declarations, avoid selection
+statement in calling code.
+</p>
+
+<p>
+Only the last of these (declaration statement) is not a bad smell.
+</p>
+
+</aside>
+
+</section>
+</section>
+<section>
+<section id="slide-org28ed362">
+<h2 id="org28ed362">Declarative Domains and Patterns</h2>
+<div class="outline-text-2" id="text-org28ed362">
+</div>
+</section>
+<section id="slide-org56870d4">
+<h3 id="org56870d4">Logging : Imperative turned Declarative</h3>
+<div class='vertspace2'></div>
+<div class="org-src-container">
+
+<pre  class="src src-c"><span style="color: #0000ff;">fprintf</span><span style="color: #707183;">(</span>g_debugLogFilep, <span style="color: #b22222;">"R Tape loading error, %d:%d"</span>, line, stmt<span style="color: #707183;">)</span>;
+</pre>
+</div>
+<p>
+vs
+</p>
+<div class="org-src-container">
+
+<pre  class="src src-c++">LOG<span style="color: #707183;">(</span><span style="color: #b22222;">"R Tape loading error, "</span> &lt;&lt; line &lt;&lt; <span style="color: #b22222;">':'</span> &lt;&lt; stmt<span style="color: #707183;">)</span>;
+</pre>
+</div>
+
+<aside class="notes">
+<p>
+Logging is very often declarative. Nothing much new here, but let's explore a
+bit because it's a domain that benefits greatly from declarative practice.
+</p>
+
+<p>
+We're using overloaded operators. We're using RAII. We've got a declarative,
+concatenative style. What has been gained here?
+</p>
+
+<p>
+Composability: through operator overloading, we have the ability to extend the
+expression, because expressions are composable.
+</p>
+
+<p>
+Extensibility: we can provide the operator for our own types.
+</p>
+
+<p>
+Type checking: with fprintf, the format string and the arguments have to match
+or bad things will happen. The worst we can expect here is that we get
+unexpected conversions of the arguments and therefore unexpected output, but
+that shouldn't actually cause a crash. And usually we'll get a compile error.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orgbe482a2">
+<h3 id="orgbe482a2">Safety at the Cost of Performance?</h3>
+<div class='vertspace2'></div>
+<div class="org-src-container">
+
+<pre  class="src src-c++">LOG<span style="color: #707183;">(</span><span style="color: #b22222;">"R Tape loading error, "</span> &lt;&lt; line &lt;&lt; <span style="color: #b22222;">':'</span> &lt;&lt; stmt<span style="color: #707183;">)</span>;
+</pre>
+</div>
+<p>
+Logging is a great candidate for expression templates.
+</p>
+
+<p>
+Marc Eaddy: <i>Pimp My Log()</i> (CppCon 2014 Lightning Talks)
+</p>
+
+<p>
+<a href="https://www.youtube.com/watch?v=TS_waQZcZVc">https://www.youtube.com/watch?v=TS_waQZcZVc</a>
+</p>
+
+<aside class="notes">
+<p>
+We gained safety and ease of use. We lost performance?
+</p>
+
+<p>
+We can get the performance back by using expression templates. Logging is a
+great candidate for expression templates.
+</p>
+<ul>
+<li>paradoxically, because it's a single <i>statement</i></li>
+<li>a single statement issued for a single side-effect</li>
+<li>so avoids problems with <code>auto</code> that can arise with expression templates</li>
+
+</ul>
+
+</aside>
+
+</section>
+<section id="slide-orgd8c5ecc">
+<h3 id="orgd8c5ecc">Where Did the Global Go?</h3>
+<div class='vertspace2'></div>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #006400;">// </span><span style="color: #006400;">somewhere, a "global" variable lurks? where does the log go to?</span>
+
+<span style="color: #006400;">// </span><span style="color: #006400;">declarative log context</span>
+DECLARE_LOG_SOURCE<span style="color: #707183;">(</span>Spectrum<span style="color: #707183;">)</span>;
+
+LOG<span style="color: #707183;">(</span><span style="color: #b22222;">"R Tape loading error, "</span> &lt;&lt; line &lt;&lt; <span style="color: #b22222;">':'</span> &lt;&lt; stmt<span style="color: #707183;">)</span>;
+</pre>
+</div>
+
+<p>
+If the problem you're solving fundamentally cuts across the code, sometimes a
+singleton works just fine. (With the usual caveats.)
+</p>
+
+<aside class="notes">
+<p>
+Logging framework? What has replaced the global variable? Functions and/or
+declarations in the global namespace.
+</p>
+
+<p>
+The logging library I use has the idea of a log source: a way to name where logs
+are generated, picked up from the most enclosing namespace (class, actual
+namespace or translation unit). This is a "global variable" but one that is
+constant.
+</p>
+
+<p>
+The benefits of declarative style outweigh the drawbacks of having a few global
+variables for domains like this.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orgfd07299">
+<h3 id="orgfd07299">Log Sinks: OO turned Declarative</h3>
+<div class='vertspace2'></div>
+<p>
+A study in compositional design.
+</p>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #a020f0;">class</span> <span style="color: #228b22;">Sink</span>
+<span style="color: #707183;">{</span>
+  <span style="color: #0000ff;">...</span>
+  <span style="color: #a020f0;">virtual</span> <span style="color: #228b22;">bool</span> Push<span style="color: #7388d6;">(</span><span style="color: #a020f0;">const</span> <span style="color: #228b22;">Entry</span>&amp; <span style="color: #a0522d;">e</span><span style="color: #7388d6;">)</span>;
+  <span style="color: #0000ff;">...</span>
+<span style="color: #707183;">}</span>;
+</pre>
+</div>
+
+<aside class="notes">
+<p>
+The counterpart to a log source is a log sink. This takes the place of the
+global file pointer. On destruction, the logger object dispatches the log entry
+to the sink. (Explain about Entry).
+</p>
+
+<p>
+So let's talk about log sinks, which is an example of applying declarative style
+to a traditionally object-oriented approach. The key is composition.
+</p>
+
+<p>
+A Sink has one important method: to push an entry. Notice it returns bool
+indicating whether or not the entry was actually accepted.
+</p>
+
+<p>
+With just this basic interface, we have quite a range of choices in sinks we can
+make.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orgc8c0708">
+<h3 id="orgc8c0708">Sink Variations</h3>
+<div class='vertspace2'></div>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #a020f0;">class</span> <span style="color: #228b22;">FileSink</span> : <span style="color: #228b22;">Sink</span>
+<span style="color: #707183;">{</span>
+  <span style="color: #0000ff;">...</span>
+  FileSink<span style="color: #7388d6;">(</span><span style="color: #228b22;">string_view</span> <span style="color: #a0522d;">pathname</span><span style="color: #7388d6;">)</span>;
+  <span style="color: #0000ff;">...</span>
+<span style="color: #707183;">}</span>;
+
+<span style="color: #a020f0;">class</span> <span style="color: #228b22;">DebugSink</span> : <span style="color: #228b22;">Sink</span> <span style="color: #707183;">{</span> <span style="color: #0000ff;">...</span> <span style="color: #707183;">}</span>;
+</pre>
+</div>
+
+<aside class="notes">
+<p>
+At a basic level, we can make different sinks that go to different places. One
+to a log file, one to the debug window, maybe one to a listening log aggregator
+service over the network.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org6f15d82">
+<h3 id="org6f15d82">Sink Variations</h3>
+<div class='vertspace2'></div>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #a020f0;">class</span> <span style="color: #228b22;">FilterSink</span> : <span style="color: #228b22;">Sink</span>
+<span style="color: #707183;">{</span>
+  <span style="color: #0000ff;">...</span>
+  <span style="color: #a020f0;">template</span> <span style="color: #7388d6;">&lt;</span><span style="color: #a020f0;">typename</span> <span style="color: #228b22;">Pred</span><span style="color: #7388d6;">&gt;</span>
+  FilterSink<span style="color: #7388d6;">(</span><span style="color: #228b22;">Pred</span> <span style="color: #a0522d;">p</span><span style="color: #7388d6;">)</span>;
+  <span style="color: #0000ff;">...</span>
+  <span style="color: #a020f0;">using</span> Predicate = <span style="color: #008b8b;">std</span>::<span style="color: #228b22;">function</span><span style="color: #7388d6;">&lt;</span><span style="color: #228b22;">bool</span><span style="color: #909183;">(</span><span style="color: #a020f0;">const</span> <span style="color: #228b22;">Entry</span>&amp;<span style="color: #909183;">)</span><span style="color: #7388d6;">&gt;</span>;
+  <span style="color: #228b22;">Predicate</span> <span style="color: #a0522d;">pred</span>;
+<span style="color: #707183;">}</span>;
+</pre>
+</div>
+
+<aside class="notes">
+<p>
+We can also make sinks that inspect the log entry and only accept certain
+entries. So we can make a sink that filters entries passed to it.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org921918f">
+<h3 id="org921918f">Sink Variations</h3>
+<div class='vertspace2'></div>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #006400;">// </span><span style="color: #000000; background-color: #ffa500; font-weight: bold;">TODO:</span><span style="color: #006400;"> ExecutionPolicy Concept :)</span>
+<span style="color: #a020f0;">template</span> <span style="color: #707183;">&lt;</span><span style="color: #a020f0;">typename</span> <span style="color: #228b22;">ExecutionPolicy</span><span style="color: #707183;">&gt;</span>
+<span style="color: #a020f0;">class</span> <span style="color: #228b22;">ExecSink</span> : <span style="color: #228b22;">Sink</span> <span style="color: #707183;">{</span> <span style="color: #0000ff;">...</span> <span style="color: #707183;">}</span>;
+</pre>
+</div>
+
+<aside class="notes">
+<p>
+We can make a sink that wraps another sink and implements an execution policy,
+so we can implement threaded logging or deferred flushing.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org436451c">
+<h3 id="org436451c">Sink Variations</h3>
+<div class='vertspace2'></div>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #a020f0;">class</span> <span style="color: #228b22;">MultiSink</span> : <span style="color: #228b22;">Sink</span>
+<span style="color: #707183;">{</span>
+  <span style="color: #0000ff;">...</span>
+  <span style="color: #228b22;">vector</span><span style="color: #7388d6;">&lt;</span><span style="color: #228b22;">unique_ptr</span><span style="color: #909183;">&lt;</span>Sink<span style="color: #909183;">&gt;</span><span style="color: #7388d6;">&gt;</span> sinks;
+<span style="color: #707183;">}</span>;
+</pre>
+</div>
+
+<aside class="notes">
+<p>
+We can make a sink that wraps multiple other sinks and passes entries through to
+them. And we can parameterize that on whether it will stop at the first
+accepting sink, or fan out to all.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org4f9006a">
+<h3 id="org4f9006a">Sink Variations</h3>
+<div class='vertspace2'></div>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #a020f0;">class</span> <span style="color: #228b22;">NullSink</span> : <span style="color: #228b22;">Sink</span>
+<span style="color: #707183;">{</span>
+  <span style="color: #0000ff;">...</span>
+  <span style="color: #a020f0;">virtual</span> <span style="color: #228b22;">bool</span> Push<span style="color: #7388d6;">(</span><span style="color: #a020f0;">const</span> <span style="color: #228b22;">Entry</span>&amp;<span style="color: #7388d6;">)</span> <span style="color: #a020f0;">override</span> <span style="color: #7388d6;">{</span> <span style="color: #a020f0;">return</span> <span style="color: #008b8b;">true</span>; <span style="color: #7388d6;">}</span>
+  <span style="color: #0000ff;">...</span>
+<span style="color: #707183;">}</span>;
+</pre>
+</div>
+
+<aside class="notes">
+<p>
+We can make a null sink that just returns true from Push().
+Using this, we can write declarative code at the point of construction.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org0ce4160">
+<h3 id="org0ce4160">Declarative Sink Construction</h3>
+<div class='vertspace2'></div>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #a020f0;">auto</span> <span style="color: #a0522d;">fileSink</span> = <span style="color: #707183;">[</span>&amp;<span style="color: #707183;">]</span> <span style="color: #707183;">()</span> -&gt; <span style="color: #008b8b;">std</span>::<span style="color: #228b22;">unique_ptr</span><span style="color: #707183;">&lt;</span>Sink<span style="color: #707183;">&gt;</span> <span style="color: #707183;">{</span>
+  <span style="color: #a020f0;">if</span> <span style="color: #7388d6;">(</span>logToFile<span style="color: #7388d6;">)</span> <span style="color: #7388d6;">{</span>
+    <span style="color: #a020f0;">return</span> <span style="color: #008b8b;">std</span>::make_unique<span style="color: #909183;">&lt;</span>FileSink<span style="color: #909183;">&gt;(</span>generate_filename<span style="color: #709870;">()</span><span style="color: #909183;">)</span>;
+  <span style="color: #7388d6;">}</span> <span style="color: #a020f0;">else</span> <span style="color: #7388d6;">{</span>
+    <span style="color: #a020f0;">return</span> <span style="color: #008b8b;">std</span>::make_unique<span style="color: #909183;">&lt;</span>NullSink<span style="color: #909183;">&gt;()</span>;
+  <span style="color: #7388d6;">}</span>
+<span style="color: #707183;">}()</span>;
+</pre>
+</div>
+
+<ul>
+<li>Push down (or up!) the condition using I+LE</li>
+<li>Null object pattern encapsulates and removes the condition</li>
+
+</ul>
+
+<aside class="notes">
+<p>
+IILE for inlining factory functions. The declarative part is pushing down the if
+statements. The null object pattern.
+</p>
+
+<p>
+Unfortunately the conditional operator can't easily be used here because of the
+common<sub>type</sub> requirement.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orgc96c4d7">
+<h3 id="orgc96c4d7">Testing</h3>
+<div class='vertspace2'></div>
+<div class="org-src-container">
+
+<pre  class="src src-c++">TEST_CASE<span style="color: #707183;">(</span> <span style="color: #b22222;">"Factorials are computed"</span>, <span style="color: #b22222;">"[factorial]"</span> <span style="color: #707183;">)</span> <span style="color: #707183;">{</span>
+    REQUIRE<span style="color: #7388d6;">(</span> Factorial<span style="color: #909183;">(</span><span style="color: #008b8b;">1</span><span style="color: #909183;">)</span> == <span style="color: #008b8b;">1</span> <span style="color: #7388d6;">)</span>;
+    REQUIRE<span style="color: #7388d6;">(</span> Factorial<span style="color: #909183;">(</span><span style="color: #008b8b;">2</span><span style="color: #909183;">)</span> == <span style="color: #008b8b;">2</span> <span style="color: #7388d6;">)</span>;
+    REQUIRE<span style="color: #7388d6;">(</span> Factorial<span style="color: #909183;">(</span><span style="color: #008b8b;">3</span><span style="color: #909183;">)</span> == <span style="color: #008b8b;">6</span> <span style="color: #7388d6;">)</span>;
+<span style="color: #707183;">}</span>
+</pre>
+</div>
+
+<p>
+Tests are usually declarative.
+</p>
+<ul>
+<li class="fragment appear">idempotent</li>
+<li class="fragment appear">minimal temporal dependency between statements</li>
+<li class="fragment appear">leverage constructors/RAII</li>
+<li class="fragment appear">popularity of sections over fixture management</li>
+
+</ul>
+
+<aside class="notes">
+<p>
+Both of these examples (logging and testing) use macros to hide constructor/RAII
+syntax.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org5272962">
+<h3 id="org5272962">Logging &amp; Testing: Global Concerns</h3>
+<div class='vertspace2'></div>
+<p>
+Both logging and testing tend to:
+</p>
+<ul>
+<li>be cross-cutting</li>
+<li>have global state to some extent</li>
+
+</ul>
+
+<p>
+Some problems inherently involve global state.
+</p>
+
+<aside class="notes">
+<p>
+Declarative style isn't incompatible with global state; sometimes you have to do
+what you have to do.
+</p>
+
+<p>
+C++ is a multiparadigm language; declarative style isn't "pure FP or nothing".
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org6c0284c">
+<h3 id="org6c0284c">Command-Line Parsing: Clara</h3>
+<div class='vertspace2'></div>
+<p>
+Phil Nash: <i>A Composable Command Line Parser</i>
+</p>
+
+<p>
+(CppCon 2017 Lightning Talks)
+</p>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #a020f0;">auto</span> <span style="color: #a0522d;">cli</span>
+  = ExeName<span style="color: #707183;">(</span> config.processName <span style="color: #707183;">)</span>
+  | Help<span style="color: #707183;">(</span> config.showHelp <span style="color: #707183;">)</span>
+  | Opt<span style="color: #707183;">(</span> config.listTests <span style="color: #707183;">)</span>
+      <span style="color: #707183;">[</span><span style="color: #b22222;">"-l"</span><span style="color: #707183;">][</span><span style="color: #b22222;">"--list-tests"</span><span style="color: #707183;">]</span>
+      <span style="color: #707183;">(</span> <span style="color: #b22222;">"list all/matching test cases"</span> <span style="color: #707183;">)</span>
+  | Opt<span style="color: #707183;">(</span> config.listTags <span style="color: #707183;">)</span>
+      <span style="color: #707183;">[</span><span style="color: #b22222;">"-t"</span><span style="color: #707183;">][</span><span style="color: #b22222;">"--list-tags"</span><span style="color: #707183;">]</span>
+      <span style="color: #707183;">(</span> <span style="color: #b22222;">"list all/matching tags"</span> <span style="color: #707183;">)</span>
+  <span style="color: #0000ff;">...</span>
+</pre>
+</div>
+<p>
+<a href="https://www.youtube.com/watch?v=Od4bjLfwI-A">https://www.youtube.com/watch?v=Od4bjLfwI-A</a>
+</p>
+
+<aside class="notes">
+<p>
+This is from Catch.
+</p>
+
+<p>
+I recommend watching Phil's talk. I think the key is starting with
+composability. This inevitable leads you towards unlocking a declarative style.
+</p>
+
+<p>
+Here again we can see hallmarks of declarative style:
+</p>
+<ul>
+<li>use of expressions</li>
+<li>overloading operators</li>
+<li>of course, declaration</li>
+
+</ul>
+
+<p>
+This code says WHAT very clearly. It doesn't say HOW. It doesn't CARE HOW.
+</p>
+
+</aside>
+
+</section>
+</section>
+<section>
+<section id="slide-org14f049e">
+<h2 id="org14f049e">Design Patterns</h2>
+<div class="outline-text-2" id="text-org14f049e">
+</div>
+</section>
+<section id="slide-org662cdcf">
+<h3 id="org662cdcf">OO Patterns</h3>
+<div class='vertspace2'></div>
+<p>
+Several patterns lean towards declarative style.
+</p>
+
+<p>
+Many patterns are about replacing conditions with polymorphism.
+</p>
+
+<ul>
+<li>Null object</li>
+<li>Command</li>
+<li>Composite</li>
+
+</ul>
+
+<aside class="notes">
+<p>
+These patterns have long been my favourites, but I didn't really understand why
+until I started thinking about how they encourage declarative style.
+</p>
+
+<p>
+(Explain these patterns)
+</p>
+
+<p>
+These days there is one construction pattern that comes up a lot in declarative
+style.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org35d48ce">
+<h3 id="org35d48ce">Builder Pattern: Before</h3>
+<div class='vertspace2'></div>
+<p>
+(Not the original GoF builder pattern)
+</p>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #228b22;">Schedule</span> <span style="color: #a0522d;">s</span>;
+s.AddInterval<span style="color: #707183;">(</span>fixed<span style="color: #7388d6;">{</span><span style="color: #008b8b;">1s</span><span style="color: #7388d6;">}</span><span style="color: #707183;">)</span>;
+<span style="color: #a020f0;">auto</span> <span style="color: #a0522d;">rep1</span> = Repeat<span style="color: #707183;">(</span><span style="color: #008b8b;">5</span>, random_exponential<span style="color: #7388d6;">{</span><span style="color: #008b8b;">2s</span>, <span style="color: #008b8b;">2.0</span><span style="color: #7388d6;">}</span><span style="color: #707183;">)</span>;
+s.AddInterval<span style="color: #707183;">(</span>rep1<span style="color: #707183;">)</span>;
+<span style="color: #a020f0;">auto</span> <span style="color: #a0522d;">rep2</span> = Repeat<span style="color: #707183;">(</span><span style="color: #008b8b;">0</span>, fixed<span style="color: #7388d6;">{</span><span style="color: #008b8b;">30s</span><span style="color: #7388d6;">}</span><span style="color: #707183;">)</span>;
+s.AddInterval<span style="color: #707183;">(</span>rep2<span style="color: #707183;">)</span>;
+</pre>
+</div>
+
+<aside class="notes">
+<p>
+This is not a bad interface to building a schedule.
+</p>
+
+<p>
+We've got reasonable readability, some types here to help us out. Some functions
+(<code>Repeat</code>) to help us out. Using functions is good, right?
+</p>
+
+<p>
+But of course, too many statements. The number of times we actually need to
+reuse a variable (eg <code>rep1</code>) is small compared to the number of times we just
+need to build the schedule and be done.
+</p>
+
+<p>
+Of course we could use block scoping (imperative scaffolding!) or rvalues&#x2026; or
+we could&#x2026;
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orgbc8da78">
+<h3 id="orgbc8da78">Builder Pattern: After</h3>
+<div class='vertspace2'></div>
+<p>
+(Not the original GoF builder pattern)
+</p>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #006400;">// </span><span style="color: #006400;">Schedule&amp; Schedule::then(interval_t);</span>
+
+<span style="color: #a020f0;">auto</span> <span style="color: #a0522d;">s</span> = Schedule<span style="color: #707183;">(</span><span style="color: #008b8b;">interval</span>::fixed<span style="color: #7388d6;">{</span><span style="color: #008b8b;">1s</span><span style="color: #7388d6;">}</span><span style="color: #707183;">)</span>
+  .then<span style="color: #707183;">(</span><span style="color: #008b8b;">repeat</span>::n_times<span style="color: #7388d6;">{</span><span style="color: #008b8b;">5</span>, <span style="color: #008b8b;">interval</span>::random_exponential<span style="color: #909183;">{</span><span style="color: #008b8b;">2s</span>, <span style="color: #008b8b;">2.0</span><span style="color: #909183;">}</span><span style="color: #7388d6;">}</span><span style="color: #707183;">)</span>
+  .then<span style="color: #707183;">(</span><span style="color: #008b8b;">repeat</span>::forever<span style="color: #7388d6;">{</span><span style="color: #008b8b;">interval</span>::fixed<span style="color: #909183;">{</span><span style="color: #008b8b;">30s</span><span style="color: #909183;">}</span><span style="color: #7388d6;">}</span><span style="color: #707183;">)</span>;
+</pre>
+</div>
+
+<aside class="notes">
+<p>
+&#x2026;do this.
+</p>
+
+<p>
+This is becoming more popular.
+</p>
+
+<p>
+AKA fluent pattern (Javascript).
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orgc84b8bd">
+<h3 id="orgc84b8bd">Builder Pattern: Help from C++17</h3>
+<div class='vertspace2'></div>
+<p>
+P0145: Refining Expression Evaluation Order for Idiomatic C++
+</p>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #228b22;">void</span> <span style="color: #0000ff;">f</span><span style="color: #707183;">()</span>
+<span style="color: #707183;">{</span>
+  <span style="color: #008b8b;">std</span>::<span style="color: #228b22;">string</span> <span style="color: #a0522d;">s</span> = <span style="color: #b22222;">"but I have heard it works even if you don't believe in it"</span>;
+  s.replace<span style="color: #7388d6;">(</span><span style="color: #008b8b;">0</span>, <span style="color: #008b8b;">4</span>, <span style="color: #b22222;">""</span><span style="color: #7388d6;">)</span>
+   .replace<span style="color: #7388d6;">(</span>s.find<span style="color: #909183;">(</span><span style="color: #b22222;">"even"</span><span style="color: #909183;">)</span>, <span style="color: #008b8b;">4</span>, <span style="color: #b22222;">"only"</span><span style="color: #7388d6;">)</span>
+   .replace<span style="color: #7388d6;">(</span>s.find<span style="color: #909183;">(</span><span style="color: #b22222;">" don't"</span><span style="color: #909183;">)</span>, <span style="color: #008b8b;">6</span>, <span style="color: #b22222;">""</span><span style="color: #7388d6;">)</span>;
+  assert<span style="color: #7388d6;">(</span>s == <span style="color: #b22222;">"I have heard it works only if you believe in it"</span><span style="color: #7388d6;">)</span>;
+<span style="color: #707183;">}</span>
+</pre>
+</div>
+
+<aside class="notes">
+<p>
+Evaluation order is now specified so that this works.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orgcd89871">
+<h3 id="orgcd89871">Putting Types to Work</h3>
+<div class='vertspace2'></div>
+<p>
+This "builder pattern" is an ideal place to put strong types to work.
+</p>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #006400;">// </span><span style="color: #006400;">Build a request object</span>
+<span style="color: #228b22;">request_t</span> <span style="color: #a0522d;">req</span> = make_request<span style="color: #707183;">()</span>
+  .set_req_field_1<span style="color: #707183;">(</span><span style="color: #0000ff;">...</span><span style="color: #707183;">)</span>
+  .set_req_field_2<span style="color: #707183;">(</span><span style="color: #0000ff;">...</span><span style="color: #707183;">)</span>
+  .set_opt_field<span style="color: #707183;">(</span><span style="color: #0000ff;">...</span><span style="color: #707183;">)</span>
+  .set_opt_field<span style="color: #707183;">(</span><span style="color: #0000ff;">...</span><span style="color: #707183;">)</span>
+  .set_opt_field<span style="color: #707183;">(</span><span style="color: #0000ff;">...</span><span style="color: #707183;">)</span>;
+
+<span style="color: #006400;">// </span><span style="color: #006400;">Use it</span>
+send_request<span style="color: #707183;">(</span>req<span style="color: #707183;">)</span>;
+</pre>
+</div>
+
+<aside class="notes">
+<p>
+A typical situation.
+</p>
+
+<p>
+We could put the required fields in the constructor, but we might not want to
+build the request all in one go.
+</p>
+
+<p>
+What should send<sub>request</sub> do with a request that accidentally doesn't have the
+required fields? Today it most often will assert, or simply send the request and
+get a protocol error.
+</p>
+
+<p>
+What we want is for it to fail to compile.
+</p>
+
+<p>
+We want to leverage a key ability of expressions over statements: they compose
+on the type axis.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orgfd56e70">
+<h3 id="orgfd56e70">Putting Types to Work</h3>
+<div class='vertspace2'></div>
+<p>
+The "normal" construct for this behaviour.
+</p>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #a020f0;">struct</span> <span style="color: #228b22;">request_t</span> <span style="color: #707183;">{</span>
+  <span style="color: #228b22;">request_t</span>&amp; <span style="color: #0000ff;">set_req_field_1</span><span style="color: #7388d6;">(</span><span style="color: #228b22;">field_t</span> <span style="color: #a0522d;">f</span><span style="color: #7388d6;">)</span> <span style="color: #7388d6;">{</span>
+    f1 = f;
+    <span style="color: #a020f0;">return</span> *<span style="color: #a020f0;">this</span>;
+  <span style="color: #7388d6;">}</span>
+  <span style="color: #228b22;">request_t</span>&amp; <span style="color: #0000ff;">set_req_field_2</span><span style="color: #7388d6;">(</span><span style="color: #228b22;">field_t</span> <span style="color: #a0522d;">f</span><span style="color: #7388d6;">)</span>;
+  <span style="color: #228b22;">request_t</span>&amp; <span style="color: #0000ff;">set_opt_field</span><span style="color: #7388d6;">(</span><span style="color: #228b22;">field_t</span> <span style="color: #a0522d;">f</span><span style="color: #7388d6;">)</span>;
+
+  <span style="color: #228b22;">field_t</span> <span style="color: #a0522d;">f1</span>;
+  <span style="color: #006400;">// </span><span style="color: #006400;">etc ...</span>
+<span style="color: #707183;">}</span>;
+
+<span style="color: #228b22;">request_t</span> <span style="color: #0000ff;">make_request</span><span style="color: #707183;">()</span> <span style="color: #707183;">{</span> <span style="color: #0000ff;">...</span> <span style="color: #707183;">}</span>
+</pre>
+</div>
+
+<aside class="notes">
+<p>
+What we want here is to encode the fact that the required fields have been set
+(or not) in the type of the request object.
+</p>
+
+<p>
+Values flow through the computation at runtime; types flow through the
+computation at compile-time.
+</p>
+
+<p>
+We want setting required fields to return a different type. Setting optional
+fields should return the same type.
+</p>
+
+<p>
+We also want setting fields to be idempotent in the type.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org741f1ed">
+<h3 id="org741f1ed">Behaviour in the Type</h3>
+<div class='vertspace2'></div>
+<p>
+One way: use a bitfield.
+</p>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #a020f0;">constexpr</span> <span style="color: #a020f0;">static</span> <span style="color: #228b22;">uint8_t</span> <span style="color: #a0522d;">OPT_FIELDS</span> = <span style="color: #008b8b;">1</span> &lt;&lt; <span style="color: #008b8b;">0</span>;
+<span style="color: #a020f0;">constexpr</span> <span style="color: #a020f0;">static</span> <span style="color: #228b22;">uint8_t</span> <span style="color: #a0522d;">REQ_FIELD1</span> = <span style="color: #008b8b;">1</span> &lt;&lt; <span style="color: #008b8b;">1</span>;
+<span style="color: #a020f0;">constexpr</span> <span style="color: #a020f0;">static</span> <span style="color: #228b22;">uint8_t</span> <span style="color: #a0522d;">REQ_FIELD2</span> = <span style="color: #008b8b;">1</span> &lt;&lt; <span style="color: #008b8b;">2</span>;
+<span style="color: #a020f0;">constexpr</span> <span style="color: #a020f0;">static</span> <span style="color: #228b22;">uint8_t</span> <span style="color: #a0522d;">ALL_FIELDS</span> = OPT_FIELDS | REQ_FIELD1 | REQ_FIELD2;
+</pre>
+</div>
+
+<aside class="notes">
+<p>
+We're going to encode which fields have been set in a bitfield.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orgd9579c6">
+<h3 id="orgd9579c6">Behaviour in the Type</h3>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #a020f0;">template</span> <span style="color: #707183;">&lt;</span><span style="color: #228b22;">uint8_t</span> <span style="color: #a0522d;">N</span><span style="color: #707183;">&gt;</span>
+<span style="color: #a020f0;">struct</span> <span style="color: #228b22;">request_t</span>;
+
+<span style="color: #a020f0;">template</span> <span style="color: #707183;">&lt;&gt;</span>
+<span style="color: #a020f0;">struct</span> <span style="color: #228b22;">request_t</span><span style="color: #707183;">&lt;</span><span style="color: #008b8b;">0</span><span style="color: #707183;">&gt;</span>
+<span style="color: #707183;">{</span>
+  <span style="color: #228b22;">field_t</span> <span style="color: #a0522d;">f1</span>;
+  <span style="color: #006400;">// </span><span style="color: #006400;">etc ...</span>
+<span style="color: #707183;">}</span>;
+
+<span style="color: #a020f0;">template</span> <span style="color: #707183;">&lt;</span><span style="color: #228b22;">uint8_t</span> <span style="color: #a0522d;">N</span><span style="color: #707183;">&gt;</span>
+<span style="color: #a020f0;">struct</span> <span style="color: #228b22;">request_t</span> : <span style="color: #228b22;">request_t</span><span style="color: #707183;">&lt;</span>N-<span style="color: #008b8b;">1</span><span style="color: #707183;">&gt;</span>
+<span style="color: #707183;">{</span>
+  <span style="color: #228b22;">request_t</span><span style="color: #7388d6;">&lt;</span>N &amp; ~REQ_FIELD1<span style="color: #7388d6;">&gt;</span>&amp; <span style="color: #0000ff;">set_req_field1</span><span style="color: #7388d6;">(</span><span style="color: #228b22;">field_t</span> <span style="color: #a0522d;">f</span><span style="color: #7388d6;">)</span> <span style="color: #7388d6;">{</span>
+    <span style="color: #a020f0;">this</span>-&gt;f1 = f;
+    <span style="color: #a020f0;">return</span> *<span style="color: #a020f0;">this</span>;
+  <span style="color: #7388d6;">}</span>
+  <span style="color: #228b22;">request_t</span><span style="color: #7388d6;">&lt;</span>N &amp; ~REQ_FIELD2<span style="color: #7388d6;">&gt;</span>&amp; <span style="color: #0000ff;">set_req_field2</span><span style="color: #7388d6;">(</span><span style="color: #228b22;">field_t</span> <span style="color: #a0522d;">f</span><span style="color: #7388d6;">)</span>;
+  <span style="color: #228b22;">request_t</span>&amp; <span style="color: #0000ff;">set_opt_field</span><span style="color: #7388d6;">(</span><span style="color: #228b22;">field_t</span> <span style="color: #a0522d;">f</span><span style="color: #7388d6;">)</span>;
+<span style="color: #707183;">}</span>;
+</pre>
+</div>
+
+<aside class="notes">
+<p>
+Data members in the base class.
+</p>
+
+<p>
+Clearing bits in a bitfield is idempotent. The return type of <code>set_req_field_1</code>
+might be the same as the type of the this.
+</p>
+
+<p>
+Clearing bits reduces the NTTP. And through recursion everything inherits.
+Finally we get down to the class with only optional fields left unset, and we
+can never go below that.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orgc51fb27">
+<h3 id="orgc51fb27">Behaviour in the Type</h3>
+<div class='vertspace2'></div>
+<p>
+Use <code>= delete</code> to enable the <code>send_request</code> function only for a
+correctly-filled-in request.
+</p>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #228b22;">request_t</span><span style="color: #707183;">&lt;</span>ALL_FIELDS<span style="color: #707183;">&gt;</span> <span style="color: #0000ff;">make_request</span><span style="color: #707183;">()</span>;
+
+<span style="color: #a020f0;">template</span> <span style="color: #707183;">&lt;</span><span style="color: #228b22;">uint8_t</span> <span style="color: #a0522d;">N</span><span style="color: #707183;">&gt;</span>
+<span style="color: #228b22;">void</span> <span style="color: #0000ff;">send_request</span><span style="color: #707183;">(</span><span style="color: #a020f0;">const</span> <span style="color: #228b22;">request_t</span><span style="color: #7388d6;">&lt;</span>N<span style="color: #7388d6;">&gt;</span>&amp; <span style="color: #a0522d;">req</span><span style="color: #707183;">)</span> = <span style="color: #a020f0;">delete</span>;
+
+<span style="color: #228b22;">void</span> <span style="color: #0000ff;">send_request</span><span style="color: #707183;">(</span><span style="color: #a020f0;">const</span> <span style="color: #228b22;">request_t</span><span style="color: #7388d6;">&lt;</span>OPT_FIELDS<span style="color: #7388d6;">&gt;</span>&amp; <span style="color: #a0522d;">req</span><span style="color: #707183;">)</span>;
+</pre>
+</div>
+
+<aside class="notes">
+<p>
+All that's left are the driver functions.
+</p>
+
+<p>
+<code>make_request</code> returns a request with all the bits set.
+</p>
+
+<p>
+We have to declare, but delete <code>send_request</code> for the "higher level" types so
+that they won't match the "lower level" overload. (Remember "higher level" types
+derive from "lower level" types.)
+</p>
+
+<p>
+This is nice use of types. Any non-setter functions can go in the zero
+specialization. The type machinery is fairly lightweight - no enable<sub>if</sub>, no
+SFINAE, correct code results in few type instantiations. Of course everything
+vanishes at runtime.
+</p>
+
+<p>
+No includes! All in the language. Fast compile times?
+</p>
+
+</aside>
+
+</section>
+</section>
+<section>
+<section id="slide-org6d741c7">
+<h2 id="org6d741c7">Ranges</h2>
+<div class="outline-text-2" id="text-org6d741c7">
+</div>
+</section>
+<section id="slide-org1bd0727">
+<h3 id="org1bd0727">Ranges: Example 0</h3>
+<div class='vertspace2'></div>
+<div class="org-src-container">
+
+<pre  class="src src-c++">dates_in_year<span style="color: #707183;">(</span><span style="color: #008b8b;">2015</span><span style="color: #707183;">)</span>    <span style="color: #006400;">// </span><span style="color: #006400;">0. Make a range of dates.</span>
+  | by_month<span style="color: #707183;">()</span>         <span style="color: #006400;">// </span><span style="color: #006400;">1. Group the dates by month.</span>
+  | layout_months<span style="color: #707183;">()</span>    <span style="color: #006400;">// </span><span style="color: #006400;">2. Format the month into a range of</span>
+                       <span style="color: #006400;">//    </span><span style="color: #006400;">strings.</span>
+  | chunk<span style="color: #707183;">(</span><span style="color: #008b8b;">3</span><span style="color: #707183;">)</span>           <span style="color: #006400;">// </span><span style="color: #006400;">3. Group the months that belong</span>
+                       <span style="color: #006400;">//    </span><span style="color: #006400;">side-by-side.</span>
+  | transpose_months<span style="color: #707183;">()</span> <span style="color: #006400;">// </span><span style="color: #006400;">4. Transpose the rows and columns</span>
+                       <span style="color: #006400;">//    </span><span style="color: #006400;">of the side-by-side months.</span>
+  | <span style="color: #008b8b;">view</span>::join         <span style="color: #006400;">// </span><span style="color: #006400;">5. Ungroup the side-by-side months.</span>
+  | join_months<span style="color: #707183;">()</span>      <span style="color: #006400;">// </span><span style="color: #006400;">6. Join the string of the transposed</span>
+                       <span style="color: #006400;">//    </span><span style="color: #006400;">months.</span>
+</pre>
+</div>
+
+<aside class="notes">
+<p>
+From Eric's 2015 C++Now/CppCon talk "Ranges for the Standard Library".
+</p>
+
+<p>
+This is one expression. Eric said: Composable. Lots of parts are reusable. It
+works with infinite ranges. Can show N months side-by-side (3 chosen).
+</p>
+
+<p>
+No Loops!!! (with 3 exclamation marks). But he went over that point very
+quickly. Perhaps it was a throwaway reference to Sean's work. But he didn't
+emphasize why no loops was important.
+</p>
+
+<p>
+Correct by construction. We don't have to do much to convince ourselves that
+it's correct. It's built that way.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org5e77a58">
+<h3 id="org5e77a58">Ranges: Example N</h3>
+<div class='vertspace2'></div>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #008b8b;">std</span>::<span style="color: #228b22;">mt19937</span> <span style="color: #0000ff;">gen</span><span style="color: #707183;">(</span><span style="color: #008b8b;">std</span>::random_device<span style="color: #7388d6;">{}()</span><span style="color: #707183;">)</span>;
+<span style="color: #a020f0;">auto</span> <span style="color: #a0522d;">rsvps</span> = rsvp_json                           <span style="color: #006400;">// </span><span style="color: #006400;">json is a valid range</span>
+  | <span style="color: #008b8b;">view</span>::remove_if<span style="color: #707183;">(</span><span style="color: #7388d6;">[](</span><span style="color: #a020f0;">auto</span>&amp;&amp; <span style="color: #a0522d;">elem</span><span style="color: #7388d6;">)</span> <span style="color: #7388d6;">{</span>
+        <span style="color: #a020f0;">return</span> <span style="color: #b22222;">"yes"</span> != elem.at<span style="color: #909183;">(</span><span style="color: #b22222;">"response"</span><span style="color: #909183;">)</span>; <span style="color: #7388d6;">}</span><span style="color: #707183;">)</span>  <span style="color: #006400;">// </span><span style="color: #006400;">filter out non-"yes" RSVP responses</span>
+  | <span style="color: #008b8b;">view</span>::transform<span style="color: #707183;">(</span><span style="color: #7388d6;">[](</span><span style="color: #a020f0;">auto</span>&amp;&amp; <span style="color: #a0522d;">elem</span><span style="color: #7388d6;">)</span> <span style="color: #7388d6;">{</span>
+        <span style="color: #a020f0;">return</span> elem<span style="color: #909183;">[</span><span style="color: #b22222;">"member"</span><span style="color: #909183;">][</span><span style="color: #b22222;">"name"</span><span style="color: #909183;">]</span>.dump<span style="color: #909183;">()</span>; <span style="color: #7388d6;">}</span><span style="color: #707183;">)</span> <span style="color: #006400;">// </span><span style="color: #006400;">keep name as string</span>
+  | <span style="color: #008b8b;">ranges</span>::to_vector                            <span style="color: #006400;">// </span><span style="color: #006400;">convert lazy range to vector</span>
+  | <span style="color: #008b8b;">action</span>::shuffle<span style="color: #707183;">(</span>gen<span style="color: #707183;">)</span>;                        <span style="color: #006400;">// </span><span style="color: #006400;">random shuffle vector elements</span>
+
+</pre>
+</div>
+<p>
+From <a href="https://github.com/CoreCppIL/raffle">https://github.com/CoreCppIL/raffle</a>
+</p>
+
+<aside class="notes">
+<p>
+This from the Core C++ Israel user group. It's the code they use to randomly
+pick from meetup.com RSVPs. This is only part of the code but the whole of the
+code is designed to fit on one slide.
+</p>
+
+<p>
+Once again this whole thing is a composition of two declarations and lots of
+expressions.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org4424d73">
+<h3 id="org4424d73">Ranges: Readability is Familiarity</h3>
+<div class='vertspace2'></div>
+
+<p>
+What does this do?
+</p>
+
+<div class="org-src-container">
+
+<pre  class="src src-apl">+\⍳10
+</pre>
+</div>
+
+<aside class="notes">
+<p>
+Who knows what language this is?
+</p>
+
+<p>
+Yes, that's a greek letter.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orge808cf9">
+<h3 id="orge808cf9">Ranges: Readability is Familiarity</h3>
+<div class='vertspace2'></div>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #228b22;">int</span> <span style="color: #a0522d;">arr</span><span style="color: #707183;">[]</span> = <span style="color: #707183;">{</span><span style="color: #008b8b;">1</span>,<span style="color: #008b8b;">2</span>,<span style="color: #008b8b;">3</span>,<span style="color: #008b8b;">4</span>,<span style="color: #008b8b;">5</span>,<span style="color: #008b8b;">6</span>,<span style="color: #008b8b;">7</span>,<span style="color: #008b8b;">8</span>,<span style="color: #008b8b;">9</span>,<span style="color: #008b8b;">10</span><span style="color: #707183;">}</span>;
+<span style="color: #228b22;">int</span> <span style="color: #a0522d;">sum</span> = <span style="color: #008b8b;">0</span>;
+<span style="color: #a020f0;">for</span> <span style="color: #707183;">(</span><span style="color: #228b22;">int</span> <span style="color: #a0522d;">i</span> = <span style="color: #008b8b;">0</span>; i &lt; <span style="color: #008b8b;">10</span>; ++i<span style="color: #707183;">)</span>
+<span style="color: #707183;">{</span>
+  sum += arr<span style="color: #7388d6;">[</span>i<span style="color: #7388d6;">]</span>;
+  arr<span style="color: #7388d6;">[</span>i<span style="color: #7388d6;">]</span> = sum;
+<span style="color: #707183;">}</span>
+</pre>
+</div>
+
+<aside class="notes">
+<p>
+Is this code correct?
+</p>
+
+<p>
+What is the performance?
+</p>
+
+<p>
+How sure are you? How long do you need to look at this code to know what it
+does?
+</p>
+
+<p>
+How likely is this code to retain its properties?
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org4c63fdf">
+<h3 id="org4c63fdf">Ranges: Readability is Familiarity</h3>
+<div class='vertspace2'></div>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #008b8b;">std</span>::<span style="color: #228b22;">array</span><span style="color: #707183;">&lt;</span><span style="color: #228b22;">int</span>, <span style="color: #008b8b;">10</span><span style="color: #707183;">&gt;</span> <span style="color: #a0522d;">input</span>;
+<span style="color: #008b8b;">std</span>::iota<span style="color: #707183;">(</span>input.begin<span style="color: #7388d6;">()</span>, input.end<span style="color: #7388d6;">()</span>, <span style="color: #008b8b;">1</span><span style="color: #707183;">)</span>;
+<span style="color: #008b8b;">std</span>::partial_sum<span style="color: #707183;">(</span>input.begin<span style="color: #7388d6;">()</span>, input.end<span style="color: #7388d6;">()</span>, input.begin<span style="color: #7388d6;">()</span><span style="color: #707183;">)</span>;
+</pre>
+</div>
+
+<aside class="notes">
+<p>
+Is this code correct? (You may have to look up whether <code>partial_sum</code> allows
+"overwriting" of the range - it's not obvious.
+</p>
+
+<p>
+What is the performance?
+</p>
+
+<p>
+How sure are you? How long do you need to look at this code to know what it
+does?
+</p>
+
+<p>
+How likely is this code to retain its properties?
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orgdbb25ec">
+<h3 id="orgdbb25ec">Ranges: Readability is Familiarity</h3>
+<div class='vertspace2'></div>
+<div class="org-src-container">
+
+<pre  class="src src-apl">+\⍳10
+</pre>
+</div>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #a020f0;">auto</span> <span style="color: #a0522d;">r</span> = <span style="color: #008b8b;">view</span>::iota<span style="color: #707183;">(</span><span style="color: #008b8b;">1</span><span style="color: #707183;">)</span>
+       | <span style="color: #008b8b;">view</span>::take<span style="color: #707183;">(</span><span style="color: #008b8b;">10</span><span style="color: #707183;">)</span>
+       | <span style="color: #008b8b;">view</span>::partial_sum<span style="color: #707183;">(</span><span style="color: #008b8b;">std</span>::<span style="color: #228b22;">plus</span><span style="color: #7388d6;">&lt;&gt;{}</span><span style="color: #707183;">)</span>;
+</pre>
+</div>
+
+<aside class="notes">
+<p>
+We can be pretty sure this is correct.
+</p>
+
+<p>
+It is likely to remain correct.
+</p>
+
+<p>
+You have to put some trust in the implementer of the functions. But "view" is a
+good sign that these things don't take up a lot of space and only hold exactly
+what they need to advance.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org18660c4">
+<h3 id="org18660c4">Readable &amp; Robust</h3>
+<div class='vertspace2'></div>
+<p>
+Code that says WHAT is just as readable than code that says HOW.
+</p>
+
+<p>
+We are used to seeing code that says HOW. It's more familiar.
+</p>
+
+<p>
+Code that says WHAT is more likely to remain robust.
+</p>
+
+<aside class="notes">
+<p>
+I would say MORE readable.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orgd6640a8">
+<h3 id="orgd6640a8">A Common Concern</h3>
+<div class='vertspace2'></div>
+<p>
+Are such constructs zero-cost?
+</p>
+
+<p>
+I feel uneasy when I can't clearly see the cost of what I'm writing.
+</p>
+
+<p>
+Ultimately, I have to trust something.
+</p>
+
+<aside class="notes">
+<p>
+There are two kinds of trust: social trust, and security-theoretic trust.
+(explain)
+</p>
+
+<p>
+Most of the time we trust the compiler in a security-theoretic sense. We
+certainly trust the hardware that way. We have no choice.
+</p>
+
+<p>
+The fiction that we know what the compiler is doing all the time hasn't been
+true for a while. Just watch one of Chandler's live coding talks. He's forgotten
+more about how optimization works than I'll ever know, and he still discovers
+something surprising every time he measures.
+</p>
+
+<p>
+We need to learn to let go of "social trust" and accept "security-theoretic
+trust" - because there is no choice. Once we do that, we see that trusting a
+co-worker who wrote the interface is no more scary than trusting the people at
+Intel who designed the CPU. In fact, probably less scary.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orgafd514d">
+<h3 id="orgafd514d">Ranges: "Wholemeal Programming"</h3>
+<div class='vertspace2'></div>
+<p>
+Declarative style is about processing data pipelines.
+</p>
+
+<p>
+Components can alter either the range itself, or the elements, or both.
+</p>
+
+<ul>
+<li class="fragment appear">generators</li>
+<li class="fragment appear">selections</li>
+<li class="fragment appear">transformations</li>
+<li class="fragment appear">permutations</li>
+<li class="fragment appear">reductions</li>
+
+</ul>
+
+<aside class="notes">
+<p>
+Generators: iota, repeat, generate, etc.
+</p>
+
+<p>
+Selections: filters like <code>remove_if</code>, take and drop type functions.
+</p>
+
+<p>
+Transformations: projection functions.
+</p>
+
+<p>
+Reductions: folds (and sometimes unfolds).
+</p>
+
+<p>
+Combos of these where convenient, e.g. chunk.
+</p>
+
+<p>
+In functional circles this is sometimes called "Wholemeal programming" as
+distinct from the "piecemeal programming" of imperative loops and conditions.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orgb9b8aa9">
+<h3 id="orgb9b8aa9">Unix Pipes</h3>
+<div class='vertspace2'></div>
+<p>
+Declarative style is about processing data pipelines.
+</p>
+
+<p>
+When you have composable pieces, exploring data is quick and easy.
+</p>
+
+<ul>
+<li class="fragment appear">generators (find)</li>
+<li class="fragment appear">selections (grep, uniq)</li>
+<li class="fragment appear">transformations (cut, tr)</li>
+<li class="fragment appear">permutations (sort)</li>
+<li class="fragment appear">reductions/unfolds (wc, xargs)</li>
+
+</ul>
+
+<aside class="notes">
+<p>
+What's the point here? These are very easy to string together, so that they
+support exploratory work.
+</p>
+
+<p>
+Once again it's all about composition.
+</p>
+
+</aside>
+
+</section>
+</section>
+<section>
+<section id="slide-org20fb8de">
+<h2 id="org20fb8de">Where C++ is Strong</h2>
+<div class="outline-text-2" id="text-org20fb8de">
+</div>
+</section>
+<section id="slide-org791c2a0">
+<h3 id="org791c2a0">RAII, Constructors, Destructors</h3>
+<div class='vertspace2'></div>
+<p>
+RAII is the bread-and-butter of C++ programming.
+</p>
+
+<p>
+It's a natural fit for a declarative style.
+</p>
+
+<aside class="notes">
+<p>
+Obviously, RAII is all about declaring something and letting the C++ machinery
+take care of lifetime.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org5000b98">
+<h3 id="org5000b98">Avoid sentinel constructors</h3>
+<div class='vertspace2'></div>
+<p>
+They harm reason-ability.
+</p>
+
+<p>
+They necessitate/proliferate special sentinel values.
+</p>
+
+<p>
+They may introduce use-time checks for "actually initialized".
+</p>
+
+<aside class="notes">
+<p>
+Sentinel-construction is viral, like <code>const</code> but in a bad way. It spreads
+downstream. If you require a class to be nullary-constructible, you require all
+its members to be sentinel-constructible, and so on.
+</p>
+
+<p>
+See <code>std::variant</code>&#x2026;
+</p>
+
+<p>
+Note: <code>std::vector</code> "requires" nullary construction, but only for <code>resize</code> -
+if you never call <code>resize</code>, you're fine without.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orga3033ad">
+<h3 id="orga3033ad">Initialization</h3>
+<div class='vertspace2'></div>
+<p>
+Initialization is complex. But initialization of value types is getting easier.
+</p>
+<ul>
+<li>aggregate initialization</li>
+<li>rule of zero</li>
+<li>UDLs for extra expressiveness</li>
+
+</ul>
+
+<aside class="notes">
+<p>
+Scoped <code>enum</code> + UDLs = goodness (FourCC)
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org2887418">
+<h3 id="org2887418">Functions &amp; lambdas</h3>
+<div class='vertspace2'></div>
+<p>
+Functions:
+</p>
+<ul>
+<li>turn statements into expressions</li>
+<li>give expressions names</li>
+<li>encapsulate conditions</li>
+<li>are the optimizer's bread and butter</li>
+
+</ul>
+
+<aside class="notes">
+<p>
+Functions are wonderful. Higher order functions are in some sense the FP
+equivalent of OO's dependency injection.
+</p>
+
+<p>
+See also: no raw loops.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org81e4c28">
+<h3 id="org81e4c28">Function overloads, templates</h3>
+<div class='vertspace2'></div>
+<p>
+Parametric polymorphism: enable use of functions without conditionals.
+</p>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #a020f0;">template</span> <span style="color: #707183;">&lt;</span><span style="color: #a020f0;">typename</span> <span style="color: #228b22;">A</span>, <span style="color: #a020f0;">typename</span> <span style="color: #228b22;">B</span> = A,
+          <span style="color: #a020f0;">typename</span> <span style="color: #228b22;">C</span> = <span style="color: #008b8b;">std</span>::<span style="color: #228b22;">common_type_t</span><span style="color: #7388d6;">&lt;</span><span style="color: #228b22;">A</span>, <span style="color: #228b22;">B</span><span style="color: #7388d6;">&gt;</span>,
+          <span style="color: #a020f0;">typename</span> <span style="color: #228b22;">D</span> = <span style="color: #008b8b;">std</span>::<span style="color: #228b22;">uniform_int_distribution</span><span style="color: #7388d6;">&lt;</span><span style="color: #228b22;">C</span><span style="color: #7388d6;">&gt;</span><span style="color: #707183;">&gt;</span>
+<span style="color: #a020f0;">inline</span> <span style="color: #a020f0;">auto</span> <span style="color: #0000ff;">make_uniform_distribution</span><span style="color: #707183;">(</span><span style="color: #a020f0;">const</span> <span style="color: #228b22;">A</span>&amp; <span style="color: #a0522d;">a</span>,
+                                      <span style="color: #a020f0;">const</span> <span style="color: #228b22;">B</span>&amp; <span style="color: #a0522d;">b</span> = <span style="color: #008b8b;">std</span>::<span style="color: #008b8b;">numeric_limits</span><span style="color: #7388d6;">&lt;</span><span style="color: #228b22;">B</span><span style="color: #7388d6;">&gt;</span>::max<span style="color: #7388d6;">()</span><span style="color: #707183;">)</span>
+  -&gt; <span style="color: #008b8b;">std</span>::<span style="color: #228b22;">enable_if_t</span><span style="color: #707183;">&lt;</span><span style="color: #008b8b;">std</span>::<span style="color: #228b22;">is_integral_v</span><span style="color: #7388d6;">&lt;</span><span style="color: #228b22;">C</span><span style="color: #7388d6;">&gt;</span>, <span style="color: #228b22;">D</span><span style="color: #707183;">&gt;</span>
+<span style="color: #707183;">{</span>
+  <span style="color: #a020f0;">return</span> D<span style="color: #7388d6;">(</span>a, b<span style="color: #7388d6;">)</span>;
+<span style="color: #707183;">}</span>
+</pre>
+</div>
+<p>
+Andy Bond: <i>AAAARGH!?</i> (CppCon 2016)
+</p>
+
+<p>
+<a href="https://www.youtube.com/watch?v=ZCGyvPDM0YY">https://www.youtube.com/watch?v=ZCGyvPDM0YY</a>
+</p>
+
+<aside class="notes">
+<p>
+Adopting Almost-Always-Auto Reinforces Good Habits?
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org8c04f71">
+<h3 id="org8c04f71">Function overloads, templates</h3>
+<div class='vertspace2'></div>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #a020f0;">template</span> <span style="color: #707183;">&lt;</span><span style="color: #a020f0;">typename</span> <span style="color: #228b22;">A</span>, <span style="color: #a020f0;">typename</span> <span style="color: #228b22;">B</span> = A,
+          <span style="color: #a020f0;">typename</span> <span style="color: #228b22;">C</span> = <span style="color: #008b8b;">std</span>::<span style="color: #228b22;">common_type_t</span><span style="color: #7388d6;">&lt;</span><span style="color: #228b22;">A</span>, <span style="color: #228b22;">B</span><span style="color: #7388d6;">&gt;</span>,
+          <span style="color: #a020f0;">typename</span> <span style="color: #228b22;">D</span> = <span style="color: #008b8b;">std</span>::<span style="color: #228b22;">uniform_real_distribution</span><span style="color: #7388d6;">&lt;</span><span style="color: #228b22;">C</span><span style="color: #7388d6;">&gt;</span><span style="color: #707183;">&gt;</span>
+<span style="color: #a020f0;">inline</span> <span style="color: #a020f0;">auto</span> <span style="color: #0000ff;">make_uniform_distribution</span><span style="color: #707183;">(</span><span style="color: #a020f0;">const</span> <span style="color: #228b22;">A</span>&amp; <span style="color: #a0522d;">a</span>,
+                                      <span style="color: #a020f0;">const</span> <span style="color: #228b22;">B</span>&amp; <span style="color: #a0522d;">b</span> = B<span style="color: #7388d6;">{</span><span style="color: #008b8b;">1</span><span style="color: #7388d6;">}</span><span style="color: #707183;">)</span>
+  -&gt; <span style="color: #008b8b;">std</span>::<span style="color: #228b22;">enable_if_t</span><span style="color: #707183;">&lt;</span><span style="color: #008b8b;">std</span>::<span style="color: #228b22;">is_floating_point_v</span><span style="color: #7388d6;">&lt;</span><span style="color: #228b22;">C</span><span style="color: #7388d6;">&gt;</span>, <span style="color: #228b22;">D</span><span style="color: #707183;">&gt;</span>;
+
+<span style="color: #a020f0;">class</span> <span style="color: #228b22;">uniform_duration_distribution</span>;
+
+<span style="color: #a020f0;">template</span> <span style="color: #707183;">&lt;</span><span style="color: #a020f0;">typename</span> <span style="color: #228b22;">A</span>, <span style="color: #a020f0;">typename</span> <span style="color: #228b22;">B</span> = A,
+          <span style="color: #a020f0;">typename</span> <span style="color: #228b22;">C</span> = <span style="color: #008b8b;">std</span>::<span style="color: #228b22;">common_type_t</span><span style="color: #7388d6;">&lt;</span><span style="color: #228b22;">A</span>, <span style="color: #228b22;">B</span><span style="color: #7388d6;">&gt;</span>,
+          <span style="color: #a020f0;">typename</span> <span style="color: #228b22;">D</span> = <span style="color: #228b22;">uniform_duration_distribution</span><span style="color: #7388d6;">&lt;</span><span style="color: #228b22;">C</span><span style="color: #7388d6;">&gt;</span><span style="color: #707183;">&gt;</span>
+<span style="color: #a020f0;">inline</span> <span style="color: #a020f0;">auto</span> <span style="color: #0000ff;">make_uniform_distribution</span><span style="color: #707183;">(</span><span style="color: #a020f0;">const</span> <span style="color: #228b22;">A</span>&amp; <span style="color: #a0522d;">a</span>,
+                                      <span style="color: #a020f0;">const</span> <span style="color: #228b22;">B</span>&amp; <span style="color: #a0522d;">b</span> = <span style="color: #008b8b;">B</span>::max<span style="color: #7388d6;">()</span><span style="color: #707183;">)</span> -&gt; <span style="color: #228b22;">D</span>;
+</pre>
+</div>
+
+<aside class="notes">
+<p>
+With relatively little effort, we can make a type-safe uniform distribution for
+chrono durations. Really useful for improving call sites and unlocking the
+ability for users to be type-safe.
+</p>
+
+<p>
+I use this all the time in my day job for implementing randomized network
+backoffs.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orge5c6b94">
+<h3 id="orge5c6b94">Structured bindings</h3>
+<div class='vertspace2'></div>
+<p>
+Workaround for a limitation of functions: they can only return one thing.
+</p>
+
+<p>
+Structured bindings allow multiple "atomic" declarations.
+</p>
+
+<aside class="notes">
+<p>
+We think about these often in the context of <code>if</code>-initialization, and they do go
+well together, but if you're generally trying to avoid conditions,
+<code>if</code>-initialization might become less important.
+</p>
+
+<p>
+But the principle of useful return is important.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org62460ca">
+<h3 id="org62460ca">Other features</h3>
+<div class='vertspace2'></div>
+<ul>
+<li class="fragment appear">Guaranteed copy elision P0135</li>
+<li class="fragment appear">Evaluation order guarantees P0145</li>
+<li class="fragment appear">Fold expressions</li>
+
+</ul>
+
+<aside class="notes">
+<p>
+Guaranteed copy elision: obviously really good for leveraging functions.
+</p>
+
+<p>
+Evaluation order guarantees are great for the builder pattern we saw earlier.
+</p>
+
+<p>
+Fold expressions offer increased flexibility of interface and the chance to get
+n-ary application for free with a simple binary function interface. Much like
+std::accumulate, but without the "container".
+</p>
+
+</aside>
+
+</section>
+</section>
+<section>
+<section id="slide-org2c22891">
+<h2 id="org2c22891">Where C++ is weaker</h2>
+<div class="outline-text-2" id="text-org2c22891">
+</div>
+</section>
+<section id="slide-orga685559">
+<h3 id="orga685559">Inconsistencies</h3>
+<div class='vertspace2'></div>
+<p>
+In C++17, we gained <code>if</code>- and <code>switch</code>-initializers.
+</p>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #a020f0;">if</span> <span style="color: #707183;">(</span><span style="color: #a020f0;">auto</span> <span style="color: #7388d6;">[</span>it, inserted<span style="color: #7388d6;">]</span> = m.emplace<span style="color: #7388d6;">(</span><span style="color: #b22222;">"Perry"</span>, <span style="color: #b22222;">"Platypus"</span><span style="color: #7388d6;">)</span>; inserted<span style="color: #707183;">)</span>
+<span style="color: #707183;">{</span>
+  <span style="color: #0000ff;">...</span>
+<span style="color: #707183;">}</span>
+</pre>
+</div>
+<p>
+But no love for the expression equivalent of <code>if</code>.
+</p>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #a020f0;">auto</span> <span style="color: #a0522d;">result</span> =
+  <span style="color: #707183;">(</span><span style="color: #a020f0;">auto</span> <span style="color: #7388d6;">[</span>it, inserted<span style="color: #7388d6;">]</span> = m.emplace<span style="color: #7388d6;">(</span><span style="color: #b22222;">"Perry"</span>, <span style="color: #b22222;">"Platypus"</span><span style="color: #7388d6;">)</span>; inserted<span style="color: #707183;">)</span>
+  ? <span style="color: #006400;">// </span><span style="color: #006400;">some expression ...</span>
+  : <span style="color: #006400;">// </span><span style="color: #006400;">some other expression ...</span>
+</pre>
+</div>
+
+<aside class="notes">
+<p>
+<code>if</code> and the ternary operator ostensibly do the same thing, but not really.
+</p>
+
+<p>
+Partly because <code>if</code> is a statement and doesn't need to obey the rules of the
+type system in its two branches.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org50a117b">
+<h3 id="org50a117b">Heritage: overly-broad statements</h3>
+<div class='vertspace2'></div>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #008b8b;">std</span>::lock_guard<span style="color: #707183;">&lt;</span><span style="color: #008b8b;">std</span>::mutex<span style="color: #707183;">&gt;(</span>mut<span style="color: #707183;">)</span>; <span style="color: #006400;">// </span><span style="color: #006400;">oops</span>
+</pre>
+</div>
+<p>
+See also:
+</p>
+<ul>
+<li>most vexing parse</li>
+<li>discarded-value expression</li>
+
+</ul>
+
+<aside class="notes">
+<p>
+Loads of hard-to-find bugs resulting from these issues.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org8d3fde7">
+<h3 id="org8d3fde7">Heritage: assignment</h3>
+<div class='vertspace2'></div>
+<p>
+Assignment is an expression.
+</p>
+<ul>
+<li>implementation burden: lvalues</li>
+<li><code>operator=</code> must be a member function</li>
+<li>but <code>operator@=</code> can be free?</li>
+<li>chained assignments? convenient but a smell</li>
+
+</ul>
+
+<p>
+Assignment is blurred with construction.
+</p>
+<ul>
+<li>historic: rule of N</li>
+<li>conflicting sink parameter advice</li>
+<li>now it's worse: move vs copy, reference qualifiers</li>
+
+</ul>
+
+<aside class="notes">
+<p>
+Assignment operator "has to" return lvalue ref.
+</p>
+
+<p>
+Remember the previous quote from The C++ Prog lang: "It cannot be overemphasized
+that <i>assignment and initialization are different operations</i>."
+</p>
+
+<p>
+Example from The C++ Programming Language: "The definition of <code>operator+=</code> for
+<code>complex</code> cannot be deduced from the definitions of <code>operator+</code> and <code>operator=</code>.
+</p>
+
+<p>
+But in practice, anyone deviating from the semantics would receive short shrift
+in a code review.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org314691a">
+<h3 id="org314691a">Legacy type system: "functions"</h3>
+<div class='vertspace2'></div>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #228b22;">int</span> <span style="color: #a0522d;">steps</span> = <span style="color: #008b8b;">0</span>;
+<span style="color: #a020f0;">auto</span> <span style="color: #a0522d;">f</span> = <span style="color: #707183;">[</span>&amp;<span style="color: #707183;">](</span><span style="color: #228b22;">int</span> <span style="color: #a0522d;">x</span><span style="color: #707183;">)</span> <span style="color: #707183;">{</span> ++steps; <span style="color: #a020f0;">return</span> x / <span style="color: #008b8b;">2</span>; <span style="color: #707183;">}</span>;
+<span style="color: #a020f0;">auto</span> <span style="color: #a0522d;">g</span> = <span style="color: #707183;">[</span>&amp;<span style="color: #707183;">](</span><span style="color: #228b22;">int</span> <span style="color: #a0522d;">x</span><span style="color: #707183;">)</span> <span style="color: #707183;">{</span> ++steps; <span style="color: #a020f0;">return</span> <span style="color: #008b8b;">3</span> * x + <span style="color: #008b8b;">1</span>; <span style="color: #707183;">}</span>;
+
+<span style="color: #006400;">// </span><span style="color: #006400;">why doesn't this work?</span>
+<span style="color: #a020f0;">auto</span> <span style="color: #a0522d;">h</span> = <span style="color: #707183;">(</span>x % <span style="color: #008b8b;">2</span> == <span style="color: #008b8b;">0</span><span style="color: #707183;">)</span> ? f : g;
+</pre>
+</div>
+
+<aside class="notes">
+<p>
+Of course, we know why it doesn't work. It doesn't work because we don't have
+proper function types (which is to say, function signature types) in the
+language. We have functions, function pointers, PMFs, PMDs, lambdas, bind
+expressions&#x2026;
+</p>
+
+<p>
+We have reference-qualifiers, const, volatile, constexpr, noexcept, even
+abominable function types. But for all that power we don't have a simple way in
+the language to use or express type-equality in terms of a function's signature.
+</p>
+
+</aside>
+
+</section>
+</section>
+<section>
+<section id="slide-org2801e6e">
+<h2 id="org2801e6e">Operator Overloading</h2>
+<div class="outline-text-2" id="text-org2801e6e">
+</div>
+</section>
+<section id="slide-orgff1d18f">
+<h3 id="orgff1d18f">Expressive user-defined types</h3>
+<div class='vertspace2'></div>
+<p>
+Regular types are great!
+</p>
+
+<p>
+Operators give us compositional style with concision.
+</p>
+
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #006400;">// </span><span style="color: #006400;">which would you rather see?</span>
+
+<span style="color: #006400;">// </span><span style="color: #006400;">option 1</span>
+a = <span style="color: #a020f0;">operator</span>+<span style="color: #707183;">(</span>x, <span style="color: #a020f0;">operator</span>*<span style="color: #7388d6;">(</span>y, z<span style="color: #7388d6;">)</span><span style="color: #707183;">)</span>;
+
+<span style="color: #006400;">// </span><span style="color: #006400;">option 2</span>
+a = x + y * z;
+</pre>
+</div>
+
+<aside class="notes">
+<p>
+Potentially huge readability gain here.
+</p>
+
+<p>
+Let's explore the boundaries a bit.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orgbf78a55">
+<h3 id="orgbf78a55">Operator overloading advice</h3>
+<div class='vertspace2'></div>
+<blockquote  class="fragment appear">
+<p>"When in doubt, do as the <tt>int</tt>s do."</p>
+<div></div><div class='author'>
+<p>
+&#x2013; Scott Meyers, <i>More Effective C++</i>
+</p>
+</div>
+</blockquote>
+<br clear="all"/>
+<blockquote  class="fragment appear">
+<p>
+"It is probably wise to use operator overloading primarily to mimic conventional
+use of operators."
+</p>
+<div></div><div class='author'>
+<p>
+&#x2013; Bjarne Stroustrup, <i>The C++ Programming Language</i>
+</p>
+</div>
+</blockquote>
+<br clear="all"/>
+<blockquote  class="fragment appear">
+<p>
+"Syntax abuse is cancer"
+</p>
+<div></div><div class='author'>
+<p>
+&#x2013; /​u/​svn, reddit /​r/​cpp
+</p>
+</div>
+</blockquote>
+
+<aside class="notes">
+<p>
+Arguments against operator overloading:
+</p>
+
+<p>
+People don't like re-using operators to mean arbitrary, nonconventional things.
+(cf trademarks)
+</p>
+
+<p>
+People don't like the potential for operators to impose performance costs
+through hidden computation and through binary functions calls rather than n-ary.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orgd20ef50">
+<h3 id="orgd20ef50">Operator overloading</h3>
+<div class='vertspace2'></div>
+<p>
+When in doubt, do what operator+ does?
+</p>
+
+<aside class="notes">
+<p>
+Maybe we should try to find the most "normal" operator and see if we can divine
+some guidelines for overloading.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orgc07b899">
+<h3 id="orgc07b899">Operator+ Properties</h3>
+<div class='vertspace2'></div>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+<tr>
+<th class="org-left">Property</td>
+<th class="org-left">Math(s)</td>
+<th class="org-left">C++</td>
+</tr>
+<tr>
+<td class="org-left"><div class="fragment" data-fragment-index="1">Closed</div></td>
+<td class="org-left"><div class="fragment" data-fragment-index="2">&#x2714;</div></td>
+<td class="org-left"><div class="fragment" data-fragment-index="3">&#x2717; (overflow)</div></td>
+</tr>
+<tr>
+<td class="org-left"><div class="fragment" data-fragment-index="4">Associative</div></td>
+<td class="org-left"><div class="fragment" data-fragment-index="5">&#x2714;</div></td>
+<td class="org-left"><div class="fragment" data-fragment-index="6">&#x2717; (floating point)</div></td>
+</tr>
+<tr>
+<td class="org-left"><div class="fragment" data-fragment-index="7">Commutative</div></td>
+<td class="org-left"><div class="fragment" data-fragment-index="8">&#x2714;</div></td>
+<td class="org-left"><div class="fragment" data-fragment-index="9">&#x2717; (strings)</div></td>
+</tr>
+<tr>
+<td class="org-left"><div class="fragment" data-fragment-index="10">Has Identity</div></td>
+<td class="org-left"><div class="fragment" data-fragment-index="11">&#x2714;</div></td>
+<td class="org-left"><div class="fragment" data-fragment-index="12" style="float: inline-start;">&#x2714;</div><div class="fragment" data-fragment-index="13">&#x2714;(+0.0, -0.0!)</div></td>
+</tr>
+</tbody>
+</table>
+
+<aside class="notes">
+<p>
+This tells me that programming has its own conventions separate from the
+conventions of mathematics.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orgda4e9e3">
+<h3 id="orgda4e9e3">C++ is Not Javascript</h3>
+<div class='vertspace2'></div>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+<tr>
+<th class="org-left">Expression</td>
+<th class="org-left">True?</td>
+</tr>
+<tr>
+<td class="org-left"><div class="fragment" data-fragment-index="1">0 == []</div></td>
+<td class="org-left"><div class="fragment" data-fragment-index="2">&#x2714;</div></td>
+</tr>
+<tr>
+<td class="org-left"><div class="fragment" data-fragment-index="3">0 == "0"</div></td>
+<td class="org-left"><div class="fragment" data-fragment-index="4">&#x2714;</div></td>
+</tr>
+<tr>
+<td class="org-left"><div class="fragment" data-fragment-index="5">"0" == []</div></td>
+<td class="org-left"><div class="fragment" data-fragment-index="6">&#x2717;</div></td>
+</tr>
+</tbody>
+</table>
+
+<aside class="notes">
+<p>
+On the other hand, we do try to follow mathematical conventions mostly.
+</p>
+
+<p>
+In C++, equality is an equivalence relation.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org2c53e22">
+<h3 id="org2c53e22">Operators in Compiler History</h3>
+<p>
+(from <a href="https://jeffreykegler.github.io/personal/timeline_v3">https://jeffreykegler.github.io/personal/timeline_v3</a>)
+</p>
+<div class='vertspace2'></div>
+<p>
+1956: The IT Compiler
+</p>
+<blockquote  class="fragment appear">
+<p>
+"&#x2026;the first really <i>useful</i> compiler."
+</p>
+<div></div><div class='author'>
+<p>
+&#x2013; Donald E Knuth
+</p>
+</div>
+</blockquote>
+
+<br/>
+<p class="fragment appear">
+But it didn't have operator precedence as we know it today.
+</p>
+<blockquote  class="fragment appear">
+<p>
+"The lack of operator priority &#x2026; in the IT language was the most frequent
+single cause of errors by the users of that compiler."
+</p>
+<div></div><div class='author'>
+<p>
+&#x2013; Donald E Knuth
+</p>
+</div>
+</blockquote>
+
+<aside class="notes">
+<p>
+IT (Internal Translator) was a compiler for the IBM 650. Perhaps the first
+compiler that we would recognize as one in the modern sense.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org8afbc72">
+<h3 id="org8afbc72">Operator overloading learnings</h3>
+<div class='vertspace2'></div>
+<ul>
+<li class="fragment appear">operators communicate properties</li>
+<li class="fragment appear">operators make sense for binary functions</li>
+<li class="fragment appear">operators should be conventional</li>
+
+</ul>
+
+<aside class="notes">
+<p>
+Infix notation conveys properties more naturally?
+Commutativity, Associativity, Closedness.
+</p>
+
+<p>
+Infix expressions are more malleable, easier to move around, compose, use parens
+to clarify, etc.
+</p>
+
+<p>
+Compilers can't collapse n functions calls into an n-ary function call. Where
+binary functions are the main/only way to compose your types, overloading
+operators can make a lot of sense.
+</p>
+
+<p>
+Shorter = more readable.
+</p>
+
+<p>
+We get to define our own conventions &#x2013; no need for dogmatic reliance on maths.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org8523ddb">
+<h3 id="org8523ddb">Operator Overloading and Futures</h3>
+<div class='vertspace2'></div>
+<img src='futures.svg'/>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #006400;">// </span><span style="color: #006400;">imaginary-ish code</span>
+<span style="color: #228b22;">my_future</span><span style="color: #707183;">&lt;</span>A<span style="color: #707183;">&gt;</span> <span style="color: #0000ff;">f</span><span style="color: #707183;">(</span>X<span style="color: #707183;">)</span>;
+<span style="color: #228b22;">my_future</span><span style="color: #707183;">&lt;</span>B<span style="color: #707183;">&gt;</span> <span style="color: #0000ff;">g1</span><span style="color: #707183;">(</span>A<span style="color: #707183;">)</span>;
+<span style="color: #228b22;">my_future</span><span style="color: #707183;">&lt;</span>C<span style="color: #707183;">&gt;</span> <span style="color: #0000ff;">g2</span><span style="color: #707183;">(</span>A<span style="color: #707183;">)</span>;
+<span style="color: #228b22;">my_future</span><span style="color: #707183;">&lt;</span>D<span style="color: #707183;">&gt;</span> <span style="color: #0000ff;">h</span><span style="color: #707183;">(</span>B, C<span style="color: #707183;">)</span>;
+</pre>
+</div>
+
+<aside class="notes">
+<p>
+Imagine a simple composition of asynchronous functions that return futures.
+</p>
+
+<p>
+Notice that their composition can itself be viewed as a function from X to
+future&lt;D&gt;.
+</p>
+
+<p>
+I'm not making any assumptions about how <code>my_future</code> is implemented here.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orga1c4032">
+<h3 id="orga1c4032">Operator Overloading and Futures</h3>
+<div class='vertspace2'></div>
+<div class="org-src-container">
+
+<pre  class="fragment appear"><span style="color: #a020f0;">auto</span> <span style="color: #a0522d;">fut</span> = f<span style="color: #707183;">()</span>;
+<span style="color: #a020f0;">auto</span> <span style="color: #a0522d;">split1</span> = fut.then<span style="color: #707183;">(</span>g1<span style="color: #707183;">)</span>;
+<span style="color: #a020f0;">auto</span> <span style="color: #a0522d;">split2</span> = fut.then<span style="color: #707183;">(</span>g2<span style="color: #707183;">)</span>;
+<span style="color: #a020f0;">auto</span> <span style="color: #a0522d;">fut2</span> = when_all<span style="color: #707183;">(</span>split1, split2<span style="color: #707183;">)</span>.then<span style="color: #707183;">(</span>h<span style="color: #707183;">)</span>;
+</pre>
+</div>
+<div class="org-src-container">
+
+<pre  class="fragment appear"><span style="color: #a020f0;">auto</span> <span style="color: #a0522d;">fut</span> = f<span style="color: #707183;">()</span> &gt; <span style="color: #707183;">(</span>g1 &amp; g2<span style="color: #707183;">)</span> &gt; h;
+</pre>
+</div>
+<p class="fragment appear">
+Operator overloading can clarify the computational structure when combining
+futures/promises.
+</p>
+
+<aside class="notes">
+<p>
+When we can use operators to compose futures, it becomes easier to see the
+computational structure of the composition.
+</p>
+
+<p>
+Business logic vs mechanism of concurrency vs strategy of parallelism.
+</p>
+
+<p>
+The question is, what to use for an operator.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org2942500">
+<h3 id="org2942500">Heritage: operators</h3>
+<div class='vertspace2'></div>
+<p>
+C++ inherits pretty much all of its operators from C.
+</p>
+
+<p>
+We also inherit some fixed semantics (despite operator overloading).
+</p>
+
+<p>
+Operators can be amazing for expressivity of code and declarative constructs.
+</p>
+
+<aside class="notes">
+<p>
+Operators have a huge potential for expressing declarative code.
+</p>
+
+<p>
+Unfortunately C++ operators are one of parts of the language that gets the least
+attention.
+</p>
+
+<p>
+There is a lot potentially on the table here. We're missing a lot of
+expressivity in new areas, especially involving composition of monoidal and
+monadic types, because we lack the power in overloading operators.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org1dcc39b">
+<h3 id="org1dcc39b">Heritage: operators</h3>
+<div class='vertspace2'></div>
+<p>
+Operators are hard to deal with in C++.
+</p>
+
+<ul>
+<li class="fragment appear">fixed syntactic set</li>
+<li class="fragment appear">fixed precedence</li>
+<li class="fragment appear">fixed associativity</li>
+<li class="fragment appear">fixed arity</li>
+<li class="fragment appear">fixed fixity</li>
+<li class="fragment appear">fixed evaluation semantics (which may change on overload)</li>
+<li class="fragment appear">ADL</li>
+
+</ul>
+
+<aside class="notes">
+<p>
+No wonder overloading operators is such an unloved part of the language. No
+wonder operator overloading is frowned upon in many circles. We can't make them
+mean what they should. We can't make them do what they should. We can't make
+them very easy to use. So a lot of people look at operator overloading as syntax
+abuse.
+</p>
+
+<p>
+You get to use operator overloading pretty much if you're concatenating
+string-like things, or writing a "numeric" class like a matrix, or providing a
+way to print your type.
+</p>
+
+<p>
+I would love to see some of these shortcomings tackled. Many of these things are
+"language rules" that could be expressed in code. Can we do for operators what
+metaclasses do for user defined types?
+</p>
+
+</aside>
+
+</section>
+</section>
+<section>
+<section id="slide-orge731c3e">
+<h2 id="orge731c3e">Where C++ is getting better</h2>
+<div class="outline-text-2" id="text-orge731c3e">
+</div>
+</section>
+<section id="slide-org1de6f33">
+<h3 id="org1de6f33">"Imperative safety gear"</h3>
+<div class='vertspace2'></div>
+<ul>
+<li class="fragment appear">better warnings</li>
+<li class="fragment appear">static analysis</li>
+<li class="fragment appear"><code>[[nodiscard]]</code> attribute (use on constructors?)</li>
+<li class="fragment appear"><code>[[fallthrough]]</code> attribute</li>
+<li class="fragment appear"><code>if</code>-initializer</li>
+
+</ul>
+
+<aside class="notes">
+<p>
+We're starting to get the ability for "compilers" to help us reason about
+statement sequencing. And to avoid some of the obvious historical errors.
+</p>
+
+<p>
+<code>nodiscard</code> on constructors (or factory functions) would prevent the unnamed
+lock issue.
+</p>
+
+<p>
+Use <code>nodiscard</code> on every function!
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org135a2a8">
+<h3 id="org135a2a8">Heritage: Declaration Syntax</h3>
+<div class='vertspace2'></div>
+<p>
+Something we're too close to to appreciate how painful it is?
+</p>
+<div class="org-src-container">
+
+<pre  class="src src-c"><span style="color: #228b22;">int</span> <span style="color: #707183;">(</span>*daytab<span style="color: #707183;">)[</span><span style="color: #008b8b;">13</span><span style="color: #707183;">]</span>;
+<span style="color: #228b22;">int</span> *<span style="color: #a0522d;">daytab</span><span style="color: #707183;">[</span><span style="color: #008b8b;">13</span><span style="color: #707183;">]</span>;
+
+<span style="color: #228b22;">char</span> <span style="color: #707183;">(</span>*<span style="color: #7388d6;">(</span>*x<span style="color: #909183;">[</span><span style="color: #008b8b;">3</span><span style="color: #909183;">]</span><span style="color: #7388d6;">)()</span><span style="color: #707183;">)[</span><span style="color: #008b8b;">5</span><span style="color: #707183;">]</span>;
+</pre>
+</div>
+
+<p>
+K&amp;R: <i>5.12 Complicated Declarations</i>
+</p>
+
+<blockquote nil>
+<p>
+"C is sometimes castigated for the syntax of its declarations, particularly ones
+that involve pointers to functions."
+</p>
+</blockquote>
+<blockquote nil>
+<p>
+"&#x2026;because declarations cannot be read left-to-right, and because parentheses
+are over-used."
+</p>
+</blockquote>
+
+<aside class="notes">
+<p>
+I'm not knocking C here. This was fine in 1972!
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org8803eeb">
+<h3 id="org8803eeb">Heritage: Declaration Syntax</h3>
+<div class='vertspace2'></div>
+<p>
+Prefer <code>using</code> over <code>typedef</code>.
+</p>
+
+<p>
+Prefer trailing return syntax in aliases.
+</p>
+
+<p>
+Think of <code>auto(*)</code> as a token that means "pointer-to-function".
+</p>
+
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #a020f0;">typedef</span> <span style="color: #228b22;">int</span> <span style="color: #707183;">(</span>*<span style="color: #228b22;">FP</span><span style="color: #707183;">)(</span><span style="color: #228b22;">float</span>, <span style="color: #228b22;">string</span><span style="color: #707183;">)</span>;
+
+<span style="color: #a020f0;">using</span> <span style="color: #228b22;">FP</span> = <span style="color: #a020f0;">auto</span><span style="color: #707183;">(</span>*<span style="color: #707183;">)</span> <span style="color: #707183;">(</span><span style="color: #228b22;">float</span>, string<span style="color: #707183;">)</span> -&gt; <span style="color: #228b22;">int</span>;
+</pre>
+</div>
+
+<p>
+See also: <i>East-const vs West-const</i>
+</p>
+
+<p>
+(doubtless coming soon to a lightning talk venue near you)
+</p>
+
+</section>
+<section id="slide-org0453784">
+<h3 id="org0453784">Richness of library help</h3>
+<div class='vertspace2'></div>
+<p>
+Seemingly-unimportant helper functions (or metafunctions) can be very important
+in avoiding conditionals.
+</p>
+
+<ul>
+<li class="fragment appear"><code>std::exchange</code></li>
+<li class="fragment appear"><code>std::as_const</code></li>
+<li class="fragment appear"><code>std::apply</code></li>
+<li class="fragment appear">expanding <code>type_traits</code></li>
+<li class="fragment appear">monadic interface to <code>std::optional</code></li>
+
+</ul>
+
+<aside class="notes">
+<p>
+I love <code>std::exchange</code> - one of the most underappreciated functions in the STL.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org8c010c2">
+<h3 id="org8c010c2">Richness of library help</h3>
+<div class='vertspace2'></div>
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #a020f0;">template</span> <span style="color: #707183;">&lt;</span><span style="color: #a020f0;">typename</span> <span style="color: #228b22;">T</span><span style="color: #707183;">&gt;</span>
+<span style="color: #a020f0;">decltype</span><span style="color: #707183;">(</span><span style="color: #a020f0;">auto</span><span style="color: #707183;">)</span> <span style="color: #0000ff;">identity</span><span style="color: #707183;">(</span><span style="color: #228b22;">T</span>&amp;&amp; <span style="color: #a0522d;">t</span><span style="color: #707183;">)</span> <span style="color: #707183;">{</span>
+  <span style="color: #a020f0;">return</span> <span style="color: #008b8b;">std</span>::forward<span style="color: #7388d6;">&lt;</span><span style="color: #228b22;">T</span><span style="color: #7388d6;">&gt;(</span>t<span style="color: #7388d6;">)</span>;
+<span style="color: #707183;">}</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre  class="src src-c++"><span style="color: #a020f0;">template</span> <span style="color: #707183;">&lt;</span><span style="color: #a020f0;">typename</span> <span style="color: #228b22;">T</span><span style="color: #707183;">&gt;</span>
+<span style="color: #a020f0;">auto</span> <span style="color: #0000ff;">always</span><span style="color: #707183;">(</span><span style="color: #228b22;">T</span>&amp;&amp; <span style="color: #a0522d;">t</span><span style="color: #707183;">)</span> <span style="color: #707183;">{</span>
+  <span style="color: #a020f0;">return</span> <span style="color: #7388d6;">[</span>x = <span style="color: #008b8b;">std</span>::forward<span style="color: #909183;">&lt;</span><span style="color: #228b22;">T</span><span style="color: #909183;">&gt;(</span>t<span style="color: #909183;">)</span><span style="color: #7388d6;">](</span><span style="color: #a020f0;">auto</span>&amp;&amp;<span style="color: #0000ff;">...</span><span style="color: #7388d6;">)</span> <span style="color: #7388d6;">{</span> <span style="color: #a020f0;">return</span> x; <span style="color: #7388d6;">}</span>;
+<span style="color: #707183;">}</span>;
+</pre>
+</div>
+
+<aside class="notes">
+<p>
+These are examples of a couple functions that exist in functional languages. The
+use of them isn't apparent to non-functional programmers. Often the use lies in
+getting rid of conditionals.
+</p>
+
+<p>
+std::identity was in the original SGI STL.
+</p>
+
+<p>
+If you do TMP, you're probably used to the idea of needing these kinds of
+metafunctions. TMP doesn't have assignment, so it's by nature a lot more
+declarative. common<sub>type</sub><sub>t</sub> with a single argument is often used as the identity
+function.
+</p>
+
+</aside>
+
+</section>
+</section>
+<section>
+<section id="slide-org925ca37">
+<h2 id="org925ca37">Guidelines for Declarative Code</h2>
+<div class="outline-text-2" id="text-org925ca37">
+</div>
+</section>
+<section id="slide-org9fe6f96">
+<h3 id="org9fe6f96">Replacing Conditionals</h3>
+<div class='vertspace2'></div>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+<tr>
+<th class="org-left">Style</td>
+<th class="org-left">Signature Element</td>
+<th class="org-left">Elimination Strategy</td>
+</tr>
+<tr>
+<td class="org-left">Imperative</td>
+<td class="org-left"><div class="fragment" data-fragment-index="1">Statement</div></td>
+<td class="org-left"><div class="fragment" data-fragment-index="2">multi-computation</div></td>
+</tr>
+<tr>
+<td class="org-left">Object-Oriented</td>
+<td class="org-left"><div class="fragment" data-fragment-index="3">Object construction</div></td>
+<td class="org-left"><div class="fragment" data-fragment-index="4">polymorphism</div></td>
+</tr>
+<tr>
+<td class="org-left">Functional</td>
+<td class="org-left"><div class="fragment" data-fragment-index="5">Function call</div></td>
+<td class="org-left"><div class="fragment" data-fragment-index="6">higher order function</div></td>
+</tr>
+<tr>
+<td class="org-left">Generic</td>
+<td class="org-left"><div class="fragment" data-fragment-index="7">Type instantiation</div></td>
+<td class="org-left"><div class="fragment" data-fragment-index="8">traits class</div></td>
+</tr>
+</tbody>
+</table>
+
+<div class='vertspace2'></div>
+<p data-fragment-index="9" class="fragment appear">
+The Conditional-Replacement Meta-Pattern.
+</p>
+
+<aside class="notes">
+<ul>
+<li>fsel intrinsic on XBox 360</li>
+<li>null object pattern</li>
+<li>std::sort comparator</li>
+<li>pointer<sub>traits</sub></li>
+
+</ul>
+
+<p>
+This metapattern unlocks composition in all these cases. Because it turns
+statements into expressions suitable for the domain.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org87076c2">
+<h3 id="org87076c2">Replacing Conditionals</h3>
+<div class='vertspace2'></div>
+<ul>
+<li class="fragment appear">Push conditionals down the callstack
+<ul>
+<li>intrinsic to data structures</li>
+<li>optional/monadic interface</li>
+<li>handle at leaf, don't leak</li>
+
+</ul></li>
+<li class="fragment appear">Push conditionals up the callstack
+<ul>
+<li>dependency injection</li>
+<li>higher-order functions</li>
+<li>power to the caller</li>
+<li>lifted to root, abstracted</li>
+
+</ul></li>
+<li class="fragment appear">Goal: total functions</li>
+
+</ul>
+
+<aside class="notes">
+<p>
+Treat conditionals like we treat errors.
+</p>
+
+<p>
+Handle them and encapsulate them at the leaf. Or push them up to the root and
+abstract the condition in a construct that makes sense for your programming
+paradigm.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org58819e5">
+<h3 id="org58819e5">Replacing conditionals =&gt; fewer statements</h3>
+<div class='vertspace2'></div>
+<p>
+When you replace/encapsulate conditionals:
+</p>
+<ul>
+<li>simpler, total functions</li>
+<li>simpler loops (no break/continue without conditions)</li>
+
+</ul>
+
+</section>
+<section id="slide-org94cd848">
+<h3 id="org94cd848">Interface Guidelines</h3>
+<div class='vertspace2'></div>
+<ul>
+<li>Start with composition</li>
+<li>Consider builder/fluent-style</li>
+<li>Operator overloading can be great</li>
+<li>Identify monoids</li>
+
+</ul>
+
+<aside class="notes">
+<ul>
+<li>When building an interface, start with composition</li>
+<li>Consider fluent-style/"builder pattern"</li>
+
+</ul>
+
+</aside>
+
+</section>
+<section id="slide-org44dbcd7">
+<h3 id="org44dbcd7">Code Guidelines</h3>
+<div class='vertspace2'></div>
+<ul>
+<li>Favour expressions over statements</li>
+<li>Favour declarations over assignments</li>
+<li>Push conditionals up/down, aim for unconditional code</li>
+<li>Leverage the power of <code>return</code></li>
+<li>Do you really need nullary construction?</li>
+
+</ul>
+
+<aside class="notes">
+<ul>
+<li>Recognize imperative scaffolding, use it if you must, but better to obviate
+it</li>
+<li>Use I+LEs where appropriate for initialization</li>
+<li>encapsulate conditions, abstract choices</li>
+
+</ul>
+
+</aside>
+</section>
+</section>
+</div>
+</div>
+<script src="../reveal.js/lib/js/head.min.js"></script>
+<script src="../reveal.js/js/reveal.js"></script>
+
+<script>
+// Full list of configuration options available here:
+// https://github.com/hakimel/reveal.js#configuration
+Reveal.initialize({
+
+controls: true,
+progress: true,
+history: true,
+center: true,
+slideNumber: 'c/t',
+rollingLinks: false,
+keyboard: true,
+overview: true,
+width: 1600,
+height: 900,
+margin: 0.10,
+minScale: 0.50,
+maxScale: 2.50,
+
+theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+transition: Reveal.getQueryHash().transition || 'none', // default/cube/page/concave/zoom/linear/fade/none
+transitionSpeed: 'default',
+multiplex: {
+    secret: '', // null if client
+    id: '', // id, obtained from socket.io server
+    url: '' // Location of socket.io server
+},
+
+// Optional libraries used to extend on reveal.js
+dependencies: [
+ { src: '../reveal.js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+ { src: '../reveal.js/plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+ { src: '../reveal.js/plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+ { src: '../reveal.js/plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+ { src: '../reveal.js/plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }]
+});
+</script>
+</body>
+</html>
