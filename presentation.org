@@ -52,7 +52,7 @@ large, multiparadigm language.
 
 * In This Talk
 #+REVEAL_HTML: <div class='vertspace2'></div>
-1. Definitions
+1. Definitions & motivation
 1. Where we came from
 1. Where we are
 1. Where we could be headed
@@ -66,8 +66,10 @@ describing its control flow."
 #+END_QUOTE
 
 #+BEGIN_NOTES
-Hmm. Maybe? But control flow is sort of important to C++, I'm not sure we can
-ditch it entirely.
+You may be thinking, "control flow is sort of important to C++, I'm not sure we
+can ditch it entirely."
+
+But this is an important idea - I'll expand on it as we go.
 #+END_NOTES
 
 ** wiki.c2.com
@@ -110,10 +112,6 @@ classification.
 It's a bit like trying to classify music: there is a lot of overlap and a lot of
 subgenres. People say "classical music" commonly meaning anything from Bach to
 John Williams.
-
-The Beatles were ostensibly a pop band. "She Loves You" is unmistakeably a pop
-song. On the other hand, they produced songs like "Within You Without You" and
-"Helter Skelter".
 
 On this list, even Haskell can be programmed "imperatively".
 
@@ -267,7 +265,55 @@ This is all well and good, but here's an alternative: use fewer statements and
 more expressions.
 #+END_NOTES
 
+** Declarative Style: Avoiding Statements
+#+REVEAL_HTML: <div class='vertspace2'></div>
+ - expression statement
+ - compound statement
+ - selection statement (~if~, ~switch~)
+ - iteration statement (~for~, ~while~, ~do~)
+ - jump statement (~break~, ~continue~, ~return~, ~goto~)
+ - declaration statement
+
+#+BEGIN_NOTES
+Declarative style is essentially a preference for avoiding statements.
+
+Only the last of these (declaration statement) is not a bad smell.
+#+END_NOTES
+
+** Easy/Hard
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+REVEAL_HTML: <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+#+REVEAL_HTML: <tr>
+#+REVEAL_HTML: <th class="org-left">Easy to Use</td>
+#+REVEAL_HTML: <th class="org-left">Hard to Misuse</td>
+#+REVEAL_HTML: </tr>
+#+REVEAL_HTML: <tr>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="1">composition</div></td>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="2">typed expressions</div></td>
+#+REVEAL_HTML: </tr>
+#+REVEAL_HTML: <tr>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="3">few conditions</div></td>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="4">operators & functions</div></td>
+#+REVEAL_HTML: </tr>
+#+REVEAL_HTML: <tr>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="5">total functions</div></td>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="6">declarations</div></td>
+#+REVEAL_HTML: </tr>
+#+REVEAL_HTML: </tbody>
+#+REVEAL_HTML: </table>
+
+#+BEGIN_NOTES
+Easy to use and hard to misuse are to some extent two sides of the same coin.
+
+When we exercise expressions and avoid statements, we get this stuff.
+
+The compiler helps us.
+#+END_NOTES
+
 * Let's Deconstruct a Bit...
+#+REVEAL_HTML: <div class='vertspace2'></div>
+Let's look at where we've come from, and see how it informs moving to
+declarative style.
 
 ** World's Last Bug
 #+REVEAL_HTML: <div class='vertspace2'></div>
@@ -316,17 +362,8 @@ Some of us were used to programming C, where expressions are statements.
 But this didn't start with C: so-called expression-oriented languages were
 already around for a while, notably ALGOL-68 (1968) and LISP (1958).
 
-Hence...
+Hence Alan Perlis' quote.
 #+END_NOTES
-
-** LISP is Expression-Oriented
-#+REVEAL_HTML: <div class='vertspace2'></div>
-#+BEGIN_QUOTE
-"LISP programmers know the value of everything, but the cost of nothing."
-#+REVEAL_HTML: <div></div><div class='author'>
--- Alan Perlis (after Oscar Wilde)
-#+REVEAL_HTML: </div>
-#+END_QUOTE
 
 ** Odd Thing #1: Assignments are Expressions
 #+REVEAL_HTML: <div class='vertspace2'></div>
@@ -451,7 +488,7 @@ declaration and reassignment was blurred.
 #+BEGIN_SRC c++
 int a = 42; // declaration/initialization
 
-a = 1729; // reassignment
+a = 1729; // assignment
 #+END_SRC
 
 #+BEGIN_QUOTE
@@ -492,25 +529,23 @@ That's why we have warnings for things like this. And that's why we have things
 like if-initializers and nodiscard attributes.
 #+END_NOTES
 
-** Expressions vs Statements: Recap
+** Declarative Style: Avoiding Statements
 #+REVEAL_HTML: <div class='vertspace2'></div>
-Expressions have values.
-
-Expressions have types and value categories.
-#+REVEAL_HTML: <div class='vertspace2'></div>
-Statements mutate state.
-
-Statements have implicit constraints between them.
-#+REVEAL_HTML: <div class='vertspace2'></div>
-Expressions are easier to reason about than statements.
+ - +expression statement+
+ - compound statement
+ - selection statement (~if~, ~switch~)
+ - iteration statement (~for~, ~while~, ~do~)
+ - jump statement (~break~, ~continue~, ~return~, ~goto~)
+ - declaration statement
 
 #+BEGIN_NOTES
-To me this is the heart of declarative style: a preference for using expressions
-over statements.
+Expression statement is for side-effects only: mutable state. Oddly this
+includes assignment expressions.
+ - -wunused-value ("statement has no effect")
+ - nodiscard attribute in C++17
+ - yoda conditions
 
-Expressions are easier to reason about: compilers have been reasoning about them
-for 50 years and we are still having problems convincing compilers to reason
-effectively about statements.
+Best avoided.
 #+END_NOTES
 
 * A Quick Declarative Study
@@ -670,43 +705,11 @@ A key idea is to minimize statements and maximize the use of expressions. This
 maximizes the compiler's help.
 #+END_NOTES
 
-** Easy/Hard
-#+REVEAL_HTML: <div class='vertspace2'></div>
-#+REVEAL_HTML: <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
-#+REVEAL_HTML: <tr>
-#+REVEAL_HTML: <th class="org-left">Easy to Use</td>
-#+REVEAL_HTML: <th class="org-left">Hard to Misuse</td>
-#+REVEAL_HTML: </tr>
-#+REVEAL_HTML: <tr>
-#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="1">composition</div></td>
-#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="2">typed expressions</div></td>
-#+REVEAL_HTML: </tr>
-#+REVEAL_HTML: <tr>
-#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="3">few conditions</div></td>
-#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="4">operators & functions</div></td>
-#+REVEAL_HTML: </tr>
-#+REVEAL_HTML: <tr>
-#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="5">total functions</div></td>
-#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="6">declarations</div></td>
-#+REVEAL_HTML: </tr>
-#+REVEAL_HTML: </tbody>
-#+REVEAL_HTML: </table>
-
-#+BEGIN_NOTES
-Composition and declarative style go hand in hand.
-
-Conditions get eliminated, or get pushed up or down the call stack. Pushing down
-the call stack encapsulates conditions when there is some intrinsic property of
-the data structure that is a condition (like optionality). Pushing up the call
-stack and replacing with a behaviour that is passed in gives control to the
-caller while keeping the call site declarative.
-
-Few conditions tends to imply total functions.
-
-Declarations: const, AAA.
-#+END_NOTES
-
 * Existing Declarative Practice
+#+REVEAL_HTML: <div class='vertspace2'></div>
+We are surrounded by guidelines, goals and idioms.
+
+Looking through a declarative lens, we can tie it together.
 
 ** Core Guidelines
 #+REVEAL_HTML: <div class='vertspace2'></div>
@@ -725,6 +728,25 @@ construction.
 Corollary to /Con.4/: we probably have lots of objects that can be const.
 
 Just watch a few episodes of C++Weekly...
+#+END_NOTES
+
+** Declarative Style: Avoiding Statements
+#+REVEAL_HTML: <div class='vertspace2'></div>
+ - +expression statement+
+ - +compound statement+
+ - selection statement (~if~, ~switch~)
+ - iteration statement (~for~, ~while~, ~do~)
+ - jump statement (~break~, ~continue~, ~return~, ~goto~)
+ - declaration statement
+
+#+BEGIN_NOTES
+We try to avoid assignment after initialization.
+
+This allows us to take advantage of immutability for correctness and
+performance, and optimizations like RVO.
+
+This also reduces the need for scoping auxiliary variables and therefore reduces
+the need for compound statements.
 #+END_NOTES
 
 ** Functions in General
@@ -747,8 +769,8 @@ do_C();
 ?
 
 #+BEGIN_NOTES
-Function calls are expressions. Functions turn statements into expressions. To
-me there is one specific structural reason why function calls are better.
+Function calls are expressions. Functions turn statements into expressions. But
+there is also one specific structural reason why function calls are better.
 #+END_NOTES
 
 ** The "Normal" Reasons
@@ -808,55 +830,20 @@ None of these algorithms is groundbreaking. Some of them are little more than
 rebrandings of one-liners. None of them is more than a handful of lines.
 
 We'll come back to the idea of structuring interfaces to support declarative
-style. But for now consider ~is_prefix_of~. What order should the arguments be
-in?
+style.
 #+END_NOTES
 
-** Argument ordering
-#+REVEAL_HTML: <div class='vertspace2'></div>
-#+BEGIN_SRC c++
-string_view prefix;
-string_view s;
-
-// member function: reads nicely
-bool b = s.starts_with(prefix);
-
-// when making a free function, make it read as though it were infix
-// bool b = prefix is_prefix_of s;
-bool b = is_prefix_of(prefix, s);
-#+END_SRC
-
-#+BEGIN_NOTES
-~string_view::starts_with~ is a fine function. But it is a member function, and
-often we prefer free functions. So when we make a free function, a good rule of
-thumb is to order the arguments as if it were infix.
-#+END_NOTES
-
-** Declarative Style and Statements
+** Declarative Style: Avoiding Statements
 #+REVEAL_HTML: <div class='vertspace2'></div>
  - expression statement
  - compound statement
  - selection statement (~if~, ~switch~)
- - iteration statement (~for~, ~while~, ~do~)
- - jump statement (~break~, ~continue~, ~return~, ~goto~)
+ - +iteration statement (~for~, ~while~, ~do~)+
+ - +jump statement (~break~, ~continue~, ~return~, ~goto~)+
  - declaration statement
 
 #+BEGIN_NOTES
-Declarative style is essentially a preference for avoiding statements.
-
-Expression statement is for side-effects only: mutable state. Oddly this
-includes assignment expressions.
- - -wunused-value ("statement has no effect")
- - nodiscard attribute in C++17
- - yoda conditions
-
-No raw loops: prefer function calls (expressions) over iteration statements. And
-if you don't have loops, you don't have ~break~ or ~continue~.
-
-Use I+LEs and functions in general: leverage declarations, avoid selection
-statement in calling code.
-
-Only the last of these (declaration statement) is not a bad smell.
+"no raw loops" is leading us to avoid iteration and jump statements.
 #+END_NOTES
 
 * Declarative Domains and Patterns
@@ -912,26 +899,25 @@ great candidate for expression templates.
 
 ** Where Did the Global Go?
 #+REVEAL_HTML: <div class='vertspace2'></div>
-#+BEGIN_SRC c++
-// somewhere, a "global" variable lurks? where does the log go to?
-
-// declarative log context
-DECLARE_LOG_SOURCE(Spectrum);
-
-LOG("R Tape loading error, " << line << ':' << stmt);
+#+BEGIN_SRC c
+// g_debugLogFilep is a global variable
+fprintf(g_debugLogFilep, "R Tape loading error, %d:%d", line, stmt);
 #+END_SRC
 
-If the problem you're solving fundamentally cuts across the code, sometimes a
-singleton works just fine. (With the usual caveats.)
+#+BEGIN_SRC c++
+// somewhere, a "global" variable lurks? where does the log go to?
+LOG("R Tape loading error, " << line << ':' << stmt);
+#+END_SRC
 
 #+BEGIN_NOTES
 Logging framework? What has replaced the global variable? Functions and/or
 declarations in the global namespace.
 
-The logging library I use has the idea of a log source: a way to name where logs
-are generated, picked up from the most enclosing namespace (class, actual
-namespace or translation unit). This is a "global variable" but one that is
-constant.
+The logging library I use has the idea of log sources and sinks.
+
+A source is a way to name where logs are generated, picked up from the most
+enclosing namespace (class, actual namespace or translation unit). A sink is
+where logs go to. These are the global variables.
 
 The benefits of declarative style outweigh the drawbacks of having a few global
 variables for domains like this.
@@ -1070,6 +1056,23 @@ Unfortunately the conditional operator can't easily be used here because of the
 common_type requirement.
 #+END_NOTES
 
+** Declarative Style: Avoiding Statements
+#+REVEAL_HTML: <div class='vertspace2'></div>
+ - expression statement
+ - compound statement
+ - +selection statement (~if~, ~switch~)+
+ - iteration statement (~for~, ~while~, ~do~)
+ - jump statement (~break~, ~continue~, ~return~, ~goto~)
+ - declaration statement
+
+#+BEGIN_NOTES
+Compositional patterns like this are the object-oriented way to avoid selection
+statements.
+
+If we want to turn off logging, we do that at the point of construction. We
+don't incur the mental cost of conditions at the point of use.
+#+END_NOTES
+
 ** Testing
 #+REVEAL_HTML: <div class='vertspace2'></div>
 #+BEGIN_SRC c++
@@ -1080,7 +1083,7 @@ TEST_CASE( "Factorials are computed", "[factorial]" ) {
 }
 #+END_SRC
 
-Tests are usually declarative.
+Conditions are encapsulated; nothing is dependent.
 #+ATTR_REVEAL: :frag (appear)
  - idempotent
  - minimal temporal dependency between statements
@@ -1088,19 +1091,11 @@ Tests are usually declarative.
  - popularity of sections over fixture management
 
 #+BEGIN_NOTES
+This is from Catch.
+
 Both of these examples (logging and testing) use macros to hide constructor/RAII
-syntax.
-#+END_NOTES
+syntax. They also use global variables.
 
-** Logging & Testing: Global Concerns
-#+REVEAL_HTML: <div class='vertspace2'></div>
-Both logging and testing tend to:
- - be cross-cutting
- - have global state to some extent
-
-Some problems inherently involve global state.
-
-#+BEGIN_NOTES
 Declarative style isn't incompatible with global state; sometimes you have to do
 what you have to do.
 
@@ -1505,7 +1500,7 @@ what they need to advance.
 
 ** Readable & Robust
 #+REVEAL_HTML: <div class='vertspace2'></div>
-Code that says WHAT is just as readable than code that says HOW.
+Code that says WHAT is just as readable as code that says HOW.
 
 We are used to seeing code that says HOW. It's more familiar.
 
@@ -1513,32 +1508,6 @@ Code that says WHAT is more likely to remain robust.
 
 #+BEGIN_NOTES
 I would say MORE readable.
-#+END_NOTES
-
-** A Common Concern
-#+REVEAL_HTML: <div class='vertspace2'></div>
-Are such constructs zero-cost?
-
-I feel uneasy when I can't clearly see the cost of what I'm writing.
-
-Ultimately, I have to trust something.
-
-#+BEGIN_NOTES
-There are two kinds of trust: social trust, and security-theoretic trust.
-(explain)
-
-Most of the time we trust the compiler in a security-theoretic sense. We
-certainly trust the hardware that way. We have no choice.
-
-The fiction that we know what the compiler is doing all the time hasn't been
-true for a while. Just watch one of Chandler's live coding talks. He's forgotten
-more about how optimization works than I'll ever know, and he still discovers
-something surprising every time he measures.
-
-We need to learn to let go of "social trust" and accept "security-theoretic
-trust" - because there is no choice. Once we do that, we see that trusting a
-co-worker who wrote the interface is no more scary than trusting the people at
-Intel who designed the CPU. In fact, probably less scary.
 #+END_NOTES
 
 ** Ranges: "Wholemeal Programming"
@@ -1589,46 +1558,28 @@ support exploratory work.
 Once again it's all about composition.
 #+END_NOTES
 
+* Where can we go from here?
+#+REVEAL_HTML: <div class='vertspace2'></div>
+Where is C++ giving declarative code good support?
+
+Where can it be improved?
+
 * Where C++ is Strong
 
-** RAII, Constructors, Destructors
+** RAII, Initialization
 #+REVEAL_HTML: <div class='vertspace2'></div>
-RAII is the bread-and-butter of C++ programming.
+RAII is the bread-and-butter of C++ programming. It's a natural fit for a
+declarative style.
 
-It's a natural fit for a declarative style.
-
-#+BEGIN_NOTES
-Obviously, RAII is all about declaring something and letting the C++ machinery
-take care of lifetime.
-#+END_NOTES
-
-** Avoid sentinel constructors
-#+REVEAL_HTML: <div class='vertspace2'></div>
-They harm reason-ability.
-
-They necessitate/proliferate special sentinel values.
-
-They may introduce use-time checks for "actually initialized".
-
-#+BEGIN_NOTES
-Sentinel-construction is viral, like ~const~ but in a bad way. It spreads
-downstream. If you require a class to be nullary-constructible, you require all
-its members to be sentinel-constructible, and so on.
-
-See ~std::variant~...
-
-Note: ~std::vector~ "requires" nullary construction, but only for ~resize~ -
-if you never call ~resize~, you're fine without.
-#+END_NOTES
-
-** Initialization
-#+REVEAL_HTML: <div class='vertspace2'></div>
 Initialization is complex. But initialization of value types is getting easier.
  * aggregate initialization
  * rule of zero
  * UDLs for extra expressiveness
 
 #+BEGIN_NOTES
+Obviously, RAII is all about declaring something and letting the C++ machinery
+take care of lifetime.
+
 Scoped ~enum~ + UDLs = goodness (FourCC)
 #+END_NOTES
 
@@ -1647,9 +1598,11 @@ equivalent of OO's dependency injection.
 See also: no raw loops.
 #+END_NOTES
 
-** Function overloads, templates
+** Overloads & templates
 #+REVEAL_HTML: <div class='vertspace2'></div>
 Parametric polymorphism: enable use of functions without conditionals.
+
+Let the compiler do the right thing.
 #+BEGIN_SRC c++
 template <typename A, typename B = A,
           typename C = std::common_type_t<A, B>,
@@ -1669,7 +1622,7 @@ https://www.youtube.com/watch?v=ZCGyvPDM0YY
 Adopting Almost-Always-Auto Reinforces Good Habits?
 #+END_NOTES
 
-** Function overloads, templates
+** Overloads & templates
 #+REVEAL_HTML: <div class='vertspace2'></div>
 #+BEGIN_SRC c++
 template <typename A, typename B = A,
@@ -1734,7 +1687,7 @@ std::accumulate, but without the "container".
 #+REVEAL_HTML: <div class='vertspace2'></div>
 In C++17, we gained ~if~- and ~switch~-initializers.
 #+BEGIN_SRC c++
-if (auto [it, inserted] = m.emplace("Perry", "Platypus"); inserted)
+if (auto [it, inserted] = m.emplace("Jenny", 8675309); inserted)
 {
   ...
 }
@@ -1742,7 +1695,7 @@ if (auto [it, inserted] = m.emplace("Perry", "Platypus"); inserted)
 But no love for the expression equivalent of ~if~.
 #+BEGIN_SRC c++
 auto result =
-  (auto [it, inserted] = m.emplace("Perry", "Platypus"); inserted)
+  (auto [it, inserted] = m.emplace("Jenny", 8675309); inserted)
   ? // some expression ...
   : // some other expression ...
 #+END_SRC
@@ -1752,19 +1705,6 @@ auto result =
 
 Partly because ~if~ is a statement and doesn't need to obey the rules of the
 type system in its two branches.
-#+END_NOTES
-
-** Heritage: overly-broad statements
-#+REVEAL_HTML: <div class='vertspace2'></div>
-#+BEGIN_SRC c++
-std::lock_guard<std::mutex>(mut); // oops
-#+END_SRC
-See also:
- * most vexing parse
- * discarded-value expression
-
-#+BEGIN_NOTES
-Loads of hard-to-find bugs resulting from these issues.
 #+END_NOTES
 
 ** Heritage: assignment
@@ -1843,7 +1783,7 @@ Let's explore the boundaries a bit.
 #+REVEAL_HTML: <div class='vertspace2'></div>
 #+ATTR_REVEAL: :frag appear
 #+BEGIN_QUOTE
-#+REVEAL_HTML: <p>"When in doubt, do as the <tt>int</tt>s do."</p>
+#+REVEAL_HTML: <p>"When in doubt, do as the <code>int</code>s do."</p>
 #+REVEAL_HTML: <div></div><div class='author'>
 -- Scott Meyers, /More Effective C++/
 #+REVEAL_HTML: </div>
@@ -1919,34 +1859,10 @@ some guidelines for overloading.
 #+BEGIN_NOTES
 This tells me that programming has its own conventions separate from the
 conventions of mathematics.
-#+END_NOTES
 
-** C++ is Not Javascript
-#+REVEAL_HTML: <div class='vertspace2'></div>
-#+REVEAL_HTML: <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
-#+REVEAL_HTML: <tr>
-#+REVEAL_HTML: <th class="org-left">Expression</td>
-#+REVEAL_HTML: <th class="org-left">True?</td>
-#+REVEAL_HTML: </tr>
-#+REVEAL_HTML: <tr>
-#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="1">0 == []</div></td>
-#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="2">&#x2714;</div></td>
-#+REVEAL_HTML: </tr>
-#+REVEAL_HTML: <tr>
-#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="3">0 == "0"</div></td>
-#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="4">&#x2714;</div></td>
-#+REVEAL_HTML: </tr>
-#+REVEAL_HTML: <tr>
-#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="5">"0" == []</div></td>
-#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="6">&#x2717;</div></td>
-#+REVEAL_HTML: </tr>
-#+REVEAL_HTML: </tbody>
-#+REVEAL_HTML: </table>
-
-#+BEGIN_NOTES
 On the other hand, we do try to follow mathematical conventions mostly.
 
-In C++, equality is an equivalence relation.
+In C++, equality is an equivalence relation. Unlike in Javascript.
 #+END_NOTES
 
 ** Operators in Compiler History
@@ -1984,6 +1900,7 @@ compiler that we would recognize as one in the modern sense.
  - operators communicate properties
  - operators make sense for binary functions
  - operators should be conventional
+ - identify your monoids!
 
 #+BEGIN_NOTES
 Infix notation conveys properties more naturally?
@@ -2155,10 +2072,6 @@ typedef int (*FP)(float, string);
 using FP = auto(*) (float, string) -> int;
 #+END_SRC
 
-See also: /East-const vs West-const/
-
-(doubtless coming soon to a lightning talk venue near you)
-
 ** Richness of library help
 #+REVEAL_HTML: <div class='vertspace2'></div>
 Seemingly-unimportant helper functions (or metafunctions) can be very important
@@ -2276,34 +2189,88 @@ paradigm.
 ** Replacing conditionals => fewer statements
 #+REVEAL_HTML: <div class='vertspace2'></div>
 When you replace/encapsulate conditionals:
+ - less call-site logic (obviously)
  - simpler, total functions
  - simpler loops (no break/continue without conditions)
+ - more reason-ability
 
-** Interface Guidelines
+** Avoid nullary constructors if possible
 #+REVEAL_HTML: <div class='vertspace2'></div>
- - Start with composition
- * Consider builder/fluent-style
- * Operator overloading can be great
- * Identify monoids
+They harm reason-ability.
+
+They necessitate/proliferate special sentinel values.
+
+They may introduce use-time checks for "actually initialized".
 
 #+BEGIN_NOTES
- - When building an interface, start with composition
- * Consider fluent-style/"builder pattern"
+Sentinel-construction is viral, like ~const~ but in a bad way. It spreads
+downstream. If you require a class to be nullary-constructible, you require all
+its members to be sentinel-constructible, and so on.
+
+See ~std::variant~...
+
+Note: ~std::vector~ "requires" nullary construction, but only for ~resize~ -
+if you never call ~resize~, you're fine without.
 #+END_NOTES
 
-** Code Guidelines
+** Declarative Style: Avoiding Statements
 #+REVEAL_HTML: <div class='vertspace2'></div>
- * Favour expressions over statements
- * Favour declarations over assignments
- * Push conditionals up/down, aim for unconditional code
- * Leverage the power of ~return~
- - Do you really need nullary construction?
+#+REVEAL_HTML: <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+#+REVEAL_HTML: <tr>
+#+REVEAL_HTML: <th class="org-left">Statement</td>
+#+REVEAL_HTML: <th class="org-left">Avoidance Strategy</td>
+#+REVEAL_HTML: </tr>
+#+REVEAL_HTML: <tr>
+#+REVEAL_HTML: <td class="org-left">expression-statement</td>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="1">initialization</div></td>
+#+REVEAL_HTML: </tr>
+#+REVEAL_HTML: <tr>
+#+REVEAL_HTML: <td class="org-left"><code>if</code>, <code>switch</code></td>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="3">by paradigm</div></td>
+#+REVEAL_HTML: </tr>
+#+REVEAL_HTML: <tr>
+#+REVEAL_HTML: <td class="org-left"><code>for</code>, <code>while</code>, <code>do</code></td>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="4">"no raw loops"</div></td>
+#+REVEAL_HTML: </tr>
+#+REVEAL_HTML: <tr>
+#+REVEAL_HTML: <td class="org-left"><code>break</code>, <code>continue</code></td>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="4">"no raw loops"</div></td>
+#+REVEAL_HTML: </tr>
+#+REVEAL_HTML: <tr>
+#+REVEAL_HTML: <td class="org-left">declaration</td>
+#+REVEAL_HTML: <td class="org-left"><div class="fragment" data-fragment-index="5">all good</div></td>
+#+REVEAL_HTML: </tr>
+#+REVEAL_HTML: </tbody>
+#+REVEAL_HTML: </table>
+
+#+BEGIN_NOTES
+Conditions get eliminated, or get pushed up or down the call stack. Pushing down
+the call stack encapsulates conditions when there is some intrinsic property of
+the data structure that is a condition (like optionality). Pushing up the call
+stack and replacing with a behaviour that is passed in gives control to the
+caller while keeping the call site declarative.
+
+Few conditions tends to imply total functions.
+
+Declarations: const, AAA.
+#+END_NOTES
+
+** Declarative Goals & Guidelines
+#+REVEAL_HTML: <div class='vertspace2'></div>
+ - Start with composition
+ - Favour expressions, avoid statements
+ - Favour declarations, avoid assignments
+ - Aim for unconditional code
 
 #+BEGIN_NOTES
  * Recognize imperative scaffolding, use it if you must, but better to obviate
    it
  * Use I+LEs where appropriate for initialization
  - encapsulate conditions, abstract choices
+ * Leverage the power of ~return~
+ * Consider builder/fluent-style
+ * Identify monoids
+ - Operator overloading can be great
 #+END_NOTES
 
 * Notes                                                            :noexport:
