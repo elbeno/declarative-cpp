@@ -62,7 +62,7 @@ multiparadigm language.
 I'm going to try to look at the history of programming and C++ and the current
 practices that exist, and I'm going to look through a declarative lens.
 
-The goal is to see how to apply declarative programming principals to make our
+The goal is to see how to apply declarative programming principles to make our
 C++ better, in the context of this large, multiparadigm language that isn't
 necessarily always amenable to naive pure functional declarative techniques.
 #+END_NOTES
@@ -101,11 +101,11 @@ I'll expand on this as we go.
 Ward Cunningham's original wiki. Home to the "Informal History of Programming
 Ideas".
 
+From what else it says, this website seems to be talking more about say, Prolog,
+than C++.
+
 Order of statements should not affect semantics. Replication of statements
 should not affect semantics.
-
-But from what else it says, this website seems to be talking more about say,
-Prolog, than C++.
 #+END_NOTES
 
 ** Language Classifications?
@@ -145,8 +145,9 @@ that on average, men are taller than women.
 What we want is to decrease complexity and increase reason-ability. One of the
 important tools for that is idiom - which may increase line count!
 
-Declarative style often leads to decreasing line count, but this isn't a goal in
-and of itself.
+So decreasing line count isn't a goal in and of itself. But I am reminded of the
+famous (mis-)quote, "My apologies for writing you a long program; I didn't have time to
+write a short one."
 #+END_NOTES
 
 ** Declarative Style Motivation
@@ -162,11 +163,11 @@ to prove correct."
 #+BEGIN_NOTES
 This quote also from the reviewers who accepted my talk.
 
-I'm not sure there's going to be any proving in this talk, but for me this
-speaks to the fact that declarative style tends to focus on expressions and
-minimize the use of statements.
+Proof is a strong word. There will be no proofs in this talk. My apologies to
+those of you hoping for rigour.
 
-I would say that it is easier to convince ourselves that it is correct.
+But: I would say that it is easier to convince ourselves that code written in a
+declarative style is correct.
 #+END_NOTES
 
 ** Declarative Style Indicators
@@ -175,8 +176,8 @@ I would say that it is easier to convince ourselves that it is correct.
  - referential transparency
  - say WHAT in preference to HOW
  - minimize imperative style
- - expressions over statements
  - declaring things
+ - expressions over statements
 
 #+BEGIN_NOTES
 Declarative style is not a hard-and-fast thing, especially not in C++.
@@ -287,9 +288,9 @@ developed."
 
 ** Imperative Safety Gear
 #+REVEAL_HTML: <div class='vertspace2'></div>
-Many of our guidelines, best practices, idioms, and much of our tooling, static
-and dynamic analysis, is in service of checking the implicit constraints around
-statement "composition".
+Many of our guidelines, best practices, idioms, and much of our tooling,
+analysis, and brainpower work in service of checking the implicit constraints
+around statement "composition".
 
 #+BEGIN_NOTES
 We put a lot of effort into controlling statements!
@@ -300,7 +301,8 @@ We make tools. We like to run multiple static analysers to get different
 benefits from each.
 
 We make more tools. We make libraries in support of those tools. We add things
-to the language to help us manage this problem. We have a contracts proposal!
+to the language to help us manage this problem. We have a contracts proposal! We
+have great minds (like Lisa) working to bring formal reasoning to statement flow.
 
 This is all well and good, but here's an alternative: use fewer statements and
 more expressions.
@@ -372,11 +374,13 @@ It's doing us no favours today.
 Assignment should be a statement.
 
 #+BEGIN_NOTES
-I don't know whether this is a particularly controversial thing to say.
+This is my opinion; I don't know whether this is a particularly controversial
+thing to say. Based on the practices I see, I don't think so.
 
-When I was at university, I learned C and Modula-3. Some of my friends were
-already used to programming in C. Because of that, we frequently ran up against
-a particular error in Modula-3.
+When I was at university, my friends and I learned C. It was great. It made us
+feel very powerful. We were used to doing all kinds of questionable things in C.
+And then we learned Modula-3 (a language in the Pascal family). And then we
+frequently ran up against a particular error.
 #+END_NOTES
 
 ** Odd Thing #1: Assignments are Expressions
@@ -392,8 +396,12 @@ a particular error in Modula-3.
 And quite right, too.
 
 #+BEGIN_NOTES
-But this didn't start with C: so-called expression-oriented languages were
-already around for a while, notably ALGOL-68 (1968) and LISP (1958).
+In Modula-3, unlike C++, there is no expression-statement. Expressions are
+expressions and statements are statements, and never the twain shall meet.
+
+Modula-3 is not an expression-oriented language. But this didn't start with C:
+so-called expression-oriented languages were already around for a while, notably
+ALGOL-68 (1968) and LISP (1958).
 
 So we need to go back a bit.
 #+END_NOTES
@@ -409,7 +417,7 @@ printn(n, b) {
     extrn putchar;
     auto a;
 
-    if (a = n / b)    /* assignment, not test for equality */
+    if (a = n / b)
         printn(a, b); /* recursive */
     putchar(n % b + '0');
 }
@@ -434,6 +442,9 @@ We've learned to deal with this. But we don't really like it.
  - P0963: discouraged
 
 #+BEGIN_NOTES
+This is why I don't think it's controversial to say that assignment shouldn't be
+an expression.
+
 This is a holdover from history that we increasingly don't like, and we're
 increasingly finding ways to avoid. P0963: structured binding declaration as a
 condition
@@ -459,8 +470,8 @@ printn(n, b) {
 #+BEGIN_NOTES
 The same snippet of B.
 
-Note the comment. We're used to this today. But it's worth asking why it is that
-way.
+Note the comment I left in this time. We're used to this today. But it's worth
+asking why it is that way.
 #+END_NOTES
 
 ** Odd Thing #2: = Means Assignment
@@ -679,7 +690,10 @@ Bar b = wp.lock() ? wp.lock()->bar() : Bar{};
 Hm...
 
 #+BEGIN_NOTES
-This works. Temporary lives until semicolon? But double lock.
+This is also often known as the ternary operator; the standard calls it the
+conditional operator.
+
+I think this works? Temporary lives until semicolon? But double lock.
 #+END_NOTES
 
 ** C++?? conditional-operator-initializer?
@@ -708,7 +722,7 @@ Bar b =
 Not ISO C++.
 
 #+BEGIN_NOTES
-GCC has an extension called an expression statement.
+GCC has an extension called a statement expression.
 
 This is similar to how a compound statement might be handled in a functional
 language, where the value of the statement is the value of the last statement in
@@ -809,6 +823,9 @@ construction.
 /~ES.28~/ Use lambdas for complex initialization.
 
 #+BEGIN_NOTES
+Of course we've been doing ES 21 & 22 forever; the ability to declare variables
+at the point of use is one of the things that separates C++ from C.
+
 Corollary to /Con.4/: we probably have lots of objects that can be ~const~.
 
 Just watch a few episodes of C++Weekly...
@@ -901,7 +918,7 @@ And they're great. I like functions for all these reasons.
 #+REVEAL_HTML: <div class='vertspace2'></div>
 Functions turn statements into expressions.
 
- - ~return~ is the ~goto~ that we love
+ - ~return~ is the socially acceptable ~goto~
  - way better than ~break~
  - and if that wasn't enough, RVO
 
@@ -922,7 +939,7 @@ a place where the error was handled.
 
 ** <algorithm>
 #+REVEAL_HTML: <div class='vertspace2'></div>
-No Raw Loops
+"No Raw Loops"
 
 What does that mean?
  - encapsulate iteration statements
@@ -1364,6 +1381,10 @@ I think I have better examples.
 auto s = Schedule(interval::fixed{1s})
   .then(repeat::n_times{5, interval::random_exponential{2s, 2.0}})
   .then(repeat::forever{interval::fixed{30s}});
+
+// template <typename Timer, typename Task>
+// void Schedule::run(Timer, Task);
+s.run(timer, task);
 #+END_SRC
 
 #+BEGIN_NOTES
@@ -1616,6 +1637,8 @@ code is designed to fit on one slide.
 
 Once again this whole thing is a composition of two declarations and lots of
 expressions.
+
+Now, you might look at this and think: I can't read that easily...
 #+END_NOTES
 
 ** Ranges: Readability is Familiarity
@@ -2167,7 +2190,7 @@ But in practice, anyone deviating from the semantics would receive short shrift
 in a code review.
 #+END_NOTES
 
-** Legacy type system: "functions"
+** Type system: "functions"?
 #+REVEAL_HTML: <div class='vertspace2'></div>
 #+BEGIN_SRC c++
 int steps = 0;
@@ -2179,14 +2202,14 @@ auto h = (x % 2 == 0) ? f : g;
 #+END_SRC
 
 #+BEGIN_NOTES
-Of course, we know why it doesn't work. It doesn't work because we don't have
-proper function types (which is to say, function signature types) in the
-language. We have functions, function pointers, PMFs, PMDs, lambdas, bind
-expressions...
+It doesn't work because we don't have proper function types (which is to say,
+function signature types) in the language. We have functions, function pointers,
+PMFs, PMDs, lambdas, bind expressions...
 
-We have reference-qualifiers, const, volatile, constexpr, noexcept, even
-abominable function types. But for all that power we don't have a simple way in
-the language to use or express type-equality in terms of a function's signature.
+There is a lot of standardese for the conditional operator. But intuitively, we
+can see that there isn't a common type between the closure structs here.
+
+A function signature is a concept, not a type?
 #+END_NOTES
 
 ** Heritage: operators
