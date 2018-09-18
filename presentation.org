@@ -15,8 +15,7 @@
 
 #+TITLE: Easy to Use, Hard to Misuse
 #+AUTHOR: Ben Deane
-#+EMAIL: bdeane@blizzard.com
-#+DATE: Thursday May 10th, 2018
+#+DATE: Friday September 28th, 2018
 
 #+REVEAL_HTML: <script type="text/javascript" src="./presentation.js"></script>
 
@@ -25,31 +24,10 @@
 (setq org-reveal-title-slide
 (concat "<div class='vertspace6'/>"
 "<h3>%t</h3><h2>Declarative Style in C++</h2></div>"
-"<h3>%a / <a href=\"mailto:bdeane@blizzard.com\">bdeane@blizzard.com</a> / "
-"<a href=\"http://twitter.com/ben_deane\">@ben_deane</a></h3>"
-"<h4>C++Now / %d</h4>"))
+"<h3>%a / <a href=\"http://twitter.com/ben_deane\">@ben_deane</a></h3>"
+"<h4>CppCon / %d</h4>"))
 (set-face-foreground 'font-lock-comment-face "dark green")
 #+END_SRC
-
-* Declarative Style
-#+REVEAL_HTML: <div class='vertspace2'></div>
-#+BEGIN_QUOTE
-"I keep hearing this term and every time I hear it the definition seems very hand-wavy."
-#+REVEAL_HTML: <div></div><div class='author'>
--- A C++Now submission reviewer
-#+REVEAL_HTML: </div>
-#+END_QUOTE
-
-#+BEGIN_NOTES
-This quote from the reviewers who accepted my talk.
-
-This talk is going to be part philosophy, part history, and hopefully a good
-part pragmatism. I'm not going to give you a lot of "pure functional"
-rabbit-holing.
-
-I'm going to try to find specific guidelines that will fit with C++ as a large,
-multiparadigm language.
-#+END_NOTES
 
 * In This Talk
 #+REVEAL_HTML: <div class='vertspace2'></div>
@@ -68,44 +46,33 @@ necessarily always amenable to naive pure functional declarative techniques.
 #+END_NOTES
 
 * What Do We Mean?
-** Wikipedia
 #+REVEAL_HTML: <div class='vertspace2'></div>
 #+BEGIN_QUOTE
 "A programming paradigm ... that expresses the logic of a computation without
 describing its control flow."
+#+REVEAL_HTML: <div></div><div class='author'>
+-- Declarative programming page on Wikipedia
+#+REVEAL_HTML: </div>
+#+END_QUOTE
+#+REVEAL_HTML: <div class='vertspace2'></div>
+#+BEGIN_QUOTE
+"Often it involves the separation of 'facts' from operations on the facts."
+"... generalizes the pure functional model."
+#+REVEAL_HTML: <div></div><div class='author'>
+-- wiki.c2.com
+#+REVEAL_HTML: </div>
 #+END_QUOTE
 
 #+BEGIN_NOTES
 Removing control flow complexity is an important idea.
 
-You may be thinking, "control flow is sort of important to C++, I'm not sure we
-can ditch it entirely."
+Order of statements should not affect semantics. (Lack of internal/temporal dependencies)
 
-I'll expand on this as we go.
-#+END_NOTES
+Replication of statements should not affect semantics. (Idempotency)
 
-** wiki.c2.com
-#+REVEAL_HTML: <div class='vertspace2'></div>
-#+BEGIN_QUOTE
-"Often it involves the separation of 'facts' from operations on the facts."
-#+END_QUOTE
-#+BEGIN_QUOTE
-"... generalizes the pure functional model."
-#+END_QUOTE
-
-#+ATTR_REVEAL: :frag (appear)
- - commutativity
- - idempotency
-
-#+BEGIN_NOTES
-Ward Cunningham's original wiki. Home to the "Informal History of Programming
-Ideas".
-
-From what else it says, this website seems to be talking more about say, Prolog,
-than C++.
-
-Order of statements should not affect semantics. Replication of statements
-should not affect semantics.
+These ideas are key to the promise of declarative style: when we write in a
+declarative style, it's often easier to convince ourselves that the code is
+correct. And we'll see examples of that.
 #+END_NOTES
 
 ** Language Classifications?
@@ -120,54 +87,12 @@ should not affect semantics.
 Many general-purpose languages (certainly of the last 30-40 years) resist strict
 classification.
 
-It's a bit like trying to classify music: there is a lot of overlap and a lot of
-subgenres. People say "classical music" commonly meaning anything from Bach to
-John Williams.
+If a language is general purpose enough to be widely useful, it's likely that it
+doesn't fit neatly into a single category. Most large languages allow multiple
+techniques in programming.
 
-On this list, even Haskell can be programmed "imperatively".
-
-We would say that C++ is multiparadigm of course. Procedural, OO, functional,
-generic at least.
-#+END_NOTES
-
-** Complexity and line count
-#+REVEAL_HTML: <div class='vertspace2'></div>
-Fewer lines of code => fewer bugs?
-
-<insert hand-wave here?>
-
-#+BEGIN_NOTES
-It's an uncomfortable statistic that bug count correlates with line count.
-
-Like any statistic, we can find counterexamples. To me it's a bit like saying
-that on average, men are taller than women.
-
-What we want is to decrease complexity and increase reason-ability. One of the
-important tools for that is idiom - which may increase line count!
-
-So decreasing line count isn't a goal in and of itself. But I am reminded of the
-famous (mis-)quote, "My apologies for writing you a long program; I didn't have time to
-write a short one."
-#+END_NOTES
-
-** Declarative Style Motivation
-#+REVEAL_HTML: <div class='vertspace2'></div>
-#+BEGIN_QUOTE
-"Declarative programming is everyone's dream, because it looks like it's easier
-to prove correct."
-#+REVEAL_HTML: <div></div><div class='author'>
--- Another C++Now submission reviewer
-#+REVEAL_HTML: </div>
-#+END_QUOTE
-
-#+BEGIN_NOTES
-This quote also from the reviewers who accepted my talk.
-
-Proof is a strong word. There will be no proofs in this talk. My apologies to
-those of you hoping for rigour.
-
-But: I would say that it is easier to convince ourselves that code written in a
-declarative style is correct.
+And we would say that C++ is multiparadigm of course. Procedural, OO,
+functional, generic at least.
 #+END_NOTES
 
 ** Declarative Style Indicators
@@ -180,12 +105,12 @@ declarative style is correct.
  - expressions over statements
 
 #+BEGIN_NOTES
-Declarative style is not a hard-and-fast thing, especially not in C++.
+Declarative style is not a hard-and-fast thing, especially not in C++. It's
+rather a way of tailoring the code.
 
-It's rather a way of tailoring the code.
-
-At the risk of being etymologically reductive, in part it's a preference for
-using declarations.
+It's about a preference of style in the service of reason-ability. At the risk
+of being etymologically reductive, in part it's a preference for using
+declarations.
 
 Next: Expressions vs Statements
 #+END_NOTES
@@ -228,9 +153,9 @@ auto expr = a @ b @ c;
 #+REVEAL_HTML: <div class='vertspace2'></div>
 Consider this snippet.
 
-#+BEGIN_NOTES
-Here, @ is any operator.
+(@ stands for any operator)
 
+#+BEGIN_NOTES
 There are at least two obvious kinds of composition going on here.
 
 a, b, and c have values. expr has a value.
@@ -284,6 +209,10 @@ variable lifetime extents. We use variable scoping to control things.
 Dijkstra: "Our intellectual powers are rather geared to master static relations
 and our powers to visualize processes evolving in time are relatively poorly
 developed."
+
+Carmack: "A large fraction of the flaws in software development are due to
+programmers not fully understanding all the possible states their code may
+execute in."
 #+END_NOTES
 
 ** Imperative Safety Gear
@@ -301,8 +230,8 @@ We make tools. We like to run multiple static analysers to get different
 benefits from each.
 
 We make more tools. We make libraries in support of those tools. We add things
-to the language to help us manage this problem. We have a contracts proposal! We
-have great minds (like Lisa) working to bring formal reasoning to statement flow.
+to the language (like contracts) to help us manage this problem. There are great
+minds working to bring formal reasoning to statement flow.
 
 This is all well and good, but here's an alternative: use fewer statements and
 more expressions.
@@ -594,23 +523,23 @@ found zero occurrences.
 #+REVEAL_HTML: </tr>
 #+REVEAL_HTML: <tr>
 #+REVEAL_HTML: <td class="org-left">assignment</td>
-#+REVEAL_HTML: <td class="org-left"><i class="em em-broken_heart"></i></td>
+#+REVEAL_HTML: <td class="org-left"><i class="em-svg em-broken_heart"></i></td>
 #+REVEAL_HTML: </tr>
 #+REVEAL_HTML: <tr>
 #+REVEAL_HTML: <td class="org-left">selection</td>
-#+REVEAL_HTML: <td class="org-left"><i class="em em-heart"></i></td>
+#+REVEAL_HTML: <td class="org-left"><i class="em-svg em-heart"></i></td>
 #+REVEAL_HTML: </tr>
 #+REVEAL_HTML: <tr>
 #+REVEAL_HTML: <td class="org-left">iteration</td>
-#+REVEAL_HTML: <td class="org-left"><i class="em em-heart"></i></td>
+#+REVEAL_HTML: <td class="org-left"><i class="em-svg em-heart"></i></td>
 #+REVEAL_HTML: </tr>
 #+REVEAL_HTML: <tr>
 #+REVEAL_HTML: <td class="org-left">jump</td>
-#+REVEAL_HTML: <td class="org-left"><i class="em em-heart"></i></td>
+#+REVEAL_HTML: <td class="org-left"><i class="em-svg em-heart"></i></td>
 #+REVEAL_HTML: </tr>
 #+REVEAL_HTML: <tr>
 #+REVEAL_HTML: <td class="org-left">declaration</td>
-#+REVEAL_HTML: <td class="org-left"><i class="em em-heart"></i></td>
+#+REVEAL_HTML: <td class="org-left"><i class="em-svg em-heart"></i></td>
 #+REVEAL_HTML: </tr>
 #+REVEAL_HTML: </tbody>
 #+REVEAL_HTML: </table>
@@ -841,27 +770,27 @@ Just watch a few episodes of C++Weekly...
 #+REVEAL_HTML: </tr>
 #+REVEAL_HTML: <tr>
 #+REVEAL_HTML: <td class="org-left">assignment</td>
-#+REVEAL_HTML: <td class="org-left"><i class="em em-skull"></i></td>
+#+REVEAL_HTML: <td class="org-left"><i class="em-svg em-skull_and_crossbones"></i></td>
 #+REVEAL_HTML: <td class="org-left">guidelines</td>
 #+REVEAL_HTML: </tr>
 #+REVEAL_HTML: <tr>
 #+REVEAL_HTML: <td class="org-left">selection</td>
-#+REVEAL_HTML: <td class="org-left"><i class="em em-heart"></i></td>
+#+REVEAL_HTML: <td class="org-left"><i class="em-svg em-heart"></i></td>
 #+REVEAL_HTML: <td class="org-left"></td>
 #+REVEAL_HTML: </tr>
 #+REVEAL_HTML: <tr>
 #+REVEAL_HTML: <td class="org-left">iteration</td>
-#+REVEAL_HTML: <td class="org-left"><i class="em em-heart"></i></td>
+#+REVEAL_HTML: <td class="org-left"><i class="em-svg em-heart"></i></td>
 #+REVEAL_HTML: <td class="org-left"></td>
 #+REVEAL_HTML: </tr>
 #+REVEAL_HTML: <tr>
 #+REVEAL_HTML: <td class="org-left">jump</td>
-#+REVEAL_HTML: <td class="org-left"><i class="em em-heart"></i></td>
+#+REVEAL_HTML: <td class="org-left"><i class="em-svg em-heart"></i></td>
 #+REVEAL_HTML: <td class="org-left"></td>
 #+REVEAL_HTML: </tr>
 #+REVEAL_HTML: <tr>
 #+REVEAL_HTML: <td class="org-left">declaration</td>
-#+REVEAL_HTML: <td class="org-left"><i class="em em-heart"></i></td>
+#+REVEAL_HTML: <td class="org-left"><i class="em-svg em-heart"></i></td>
 #+REVEAL_HTML: <td class="org-left"></td>
 #+REVEAL_HTML: </tr>
 #+REVEAL_HTML: </tbody>
@@ -986,27 +915,27 @@ ranges. You don't have to put conditions or loops in your logic!
 #+REVEAL_HTML: </tr>
 #+REVEAL_HTML: <tr>
 #+REVEAL_HTML: <td class="org-left">assignment</td>
-#+REVEAL_HTML: <td class="org-left"><i class="em em-skull"></i></td>
+#+REVEAL_HTML: <td class="org-left"><i class="em-svg em-skull_and_crossbones"></i></td>
 #+REVEAL_HTML: <td class="org-left">guidelines</td>
 #+REVEAL_HTML: </tr>
 #+REVEAL_HTML: <tr>
 #+REVEAL_HTML: <td class="org-left">selection</td>
-#+REVEAL_HTML: <td class="org-left"><i class="em em-heart"></i></td>
+#+REVEAL_HTML: <td class="org-left"><i class="em-svg em-heart"></i></td>
 #+REVEAL_HTML: <td class="org-left"></td>
 #+REVEAL_HTML: </tr>
 #+REVEAL_HTML: <tr>
 #+REVEAL_HTML: <td class="org-left">iteration</td>
-#+REVEAL_HTML: <td class="org-left"><i class="em em-skull"></i></td>
+#+REVEAL_HTML: <td class="org-left"><i class="em-svg em-skull_and_crossbones"></i></td>
 #+REVEAL_HTML: <td class="org-left">"no raw loops"</td>
 #+REVEAL_HTML: </tr>
 #+REVEAL_HTML: <tr>
 #+REVEAL_HTML: <td class="org-left">jump</td>
-#+REVEAL_HTML: <td class="org-left"><i class="em em-skull"></i></td>
+#+REVEAL_HTML: <td class="org-left"><i class="em-svg em-skull_and_crossbones"></i></td>
 #+REVEAL_HTML: <td class="org-left">"no raw loops"</td>
 #+REVEAL_HTML: </tr>
 #+REVEAL_HTML: <tr>
 #+REVEAL_HTML: <td class="org-left">declaration</td>
-#+REVEAL_HTML: <td class="org-left"><i class="em em-heart"></i></td>
+#+REVEAL_HTML: <td class="org-left"><i class="em-svg em-heart"></i></td>
 #+REVEAL_HTML: <td class="org-left"></td>
 #+REVEAL_HTML: </tr>
 #+REVEAL_HTML: </tbody>
@@ -1275,27 +1204,27 @@ of polymorphism like type erasure. It wouldn't change the point here.
 #+REVEAL_HTML: </tr>
 #+REVEAL_HTML: <tr>
 #+REVEAL_HTML: <td class="org-left">assignment</td>
-#+REVEAL_HTML: <td class="org-left"><i class="em em-skull"></i></td>
+#+REVEAL_HTML: <td class="org-left"><i class="em-svg em-skull_and_crossbones"></i></td>
 #+REVEAL_HTML: <td class="org-left">guidelines</td>
 #+REVEAL_HTML: </tr>
 #+REVEAL_HTML: <tr>
 #+REVEAL_HTML: <td class="org-left">selection</td>
-#+REVEAL_HTML: <td class="org-left"><i class="em em-skull"></i></td>
+#+REVEAL_HTML: <td class="org-left"><i class="em-svg em-skull_and_crossbones"></i></td>
 #+REVEAL_HTML: <td class="org-left">paradigm shift</td>
 #+REVEAL_HTML: </tr>
 #+REVEAL_HTML: <tr>
 #+REVEAL_HTML: <td class="org-left">iteration</td>
-#+REVEAL_HTML: <td class="org-left"><i class="em em-skull"></i></td>
+#+REVEAL_HTML: <td class="org-left"><i class="em-svg em-skull_and_crossbones"></i></td>
 #+REVEAL_HTML: <td class="org-left">"no raw loops"</td>
 #+REVEAL_HTML: </tr>
 #+REVEAL_HTML: <tr>
 #+REVEAL_HTML: <td class="org-left">jump</td>
-#+REVEAL_HTML: <td class="org-left"><i class="em em-skull"></i></td>
+#+REVEAL_HTML: <td class="org-left"><i class="em-svg em-skull_and_crossbones"></i></td>
 #+REVEAL_HTML: <td class="org-left">"no raw loops"</td>
 #+REVEAL_HTML: </tr>
 #+REVEAL_HTML: <tr>
 #+REVEAL_HTML: <td class="org-left">declaration</td>
-#+REVEAL_HTML: <td class="org-left"><i class="em em-heart"></i></td>
+#+REVEAL_HTML: <td class="org-left"><i class="em-svg em-heart"></i></td>
 #+REVEAL_HTML: <td class="org-left"></td>
 #+REVEAL_HTML: </tr>
 #+REVEAL_HTML: </tbody>
